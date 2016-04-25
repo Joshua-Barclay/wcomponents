@@ -8,10 +8,8 @@
 	<xsl:import href="wc.constants.xsl"/>
 	<xsl:import href="wc.common.missingLabel.xsl"/>
 	<xsl:import href="wc.common.title.xsl"/>
-	<xsl:import href="wc.debug.common.contentCategory.xsl"/>
 	<xsl:import href="wc.common.makeLegend.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 	<!--
 		WShuffler is a component designed to allow a fixed list of options to have their order changed.
 
@@ -32,7 +30,8 @@
 					</xsl:attribute>
 					<xsl:call-template name="title"/>
 					<xsl:attribute name="class">
-						<xsl:text>shuffler wc_list_nb</xsl:text>
+						<xsl:call-template name="commonClassHelper"/>
+						<xsl:text> wc_list_nb</xsl:text>
 					</xsl:attribute>
 					<xsl:if test="$myLabel">
 						<xsl:attribute name="aria-labelledby">
@@ -43,12 +42,6 @@
 					<xsl:call-template name="ajaxTarget">
 						<xsl:with-param name="live" select="'off'"/>
 					</xsl:call-template>
-					<xsl:if test="$isDebug=1">
-						<xsl:call-template name="debugAttributes"/>
-						<xsl:call-template name="thisIsNotAllowedHere-debug">
-							<xsl:with-param name="testForPhraseOnly" select="1"/>
-						</xsl:call-template>
-					</xsl:if>
 					<xsl:apply-templates select="ui:option|ui:optgroup" mode="readOnly">
 						<xsl:with-param name="showOptions" select="'all'"/>
 						<xsl:with-param name="single" select="0"/>

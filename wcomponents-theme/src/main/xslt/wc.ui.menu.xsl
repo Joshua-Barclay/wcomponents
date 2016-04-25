@@ -2,13 +2,12 @@
 	<xsl:import href="wc.ui.menu.n.hasStickyOpen.xsl"/>
 	<xsl:import href="wc.ui.menu.n.menuRoleIsSelectable.xsl"/>
 	<xsl:import href="wc.ui.menu.n.menuTabIndexHelper.xsl"/>
-	<xsl:import href="wc.debug.menu.xsl"/>
 	<xsl:import href="wc.common.ajax.xsl"/>
 	<xsl:import href="wc.common.inlineError.xsl"/>
 	<xsl:import href="wc.common.invalid.xsl"/>
 	<xsl:import href="wc.common.hField.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
+	<xsl:import href="wc.common.hide.xsl"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 	<!--
 		Transform for WMenu. Makes bar, tree and column menus.
 
@@ -36,13 +35,6 @@
 			<xsl:call-template name="ajaxTarget"/>
 
 			<xsl:apply-templates select="ui:margin"/>
-
-			<xsl:if test="$isDebug=1">
-				<xsl:call-template name="menu-debug">
-					<xsl:with-param name="id" select="$id"/>
-					<xsl:with-param name="type" select="$type"/>
-				</xsl:call-template>
-			</xsl:if>
 			<!--
 				NOTES on class:
 				We would like to be able to define all menu appearance and behaviour
@@ -52,8 +44,8 @@
 				the "menu" class and the important stuff on roles.
 			-->
 			<xsl:attribute name="class">
-				<xsl:value-of select="$type"/>
-				<xsl:text> menu</xsl:text>
+				<xsl:call-template name="commonClassHelper"/>
+				<xsl:value-of select="concat(' ', @type)"/>
 			</xsl:attribute>
 
 			<!--
@@ -64,7 +56,7 @@
 			-->
 			<xsl:attribute name="role">
 				<xsl:choose>
-					<xsl:when test="$type='tree'">
+					<xsl:when test="@type='tree'">
 						<xsl:text>tree</xsl:text>
 					</xsl:when>
 					<xsl:when test="$isBarFlyout=1">
@@ -77,7 +69,7 @@
 			</xsl:attribute>
 			<xsl:if test="@selectMode">
 				<xsl:choose>
-					<xsl:when test="$type='tree'">
+					<xsl:when test="@type='tree'">
 						<xsl:attribute name="aria-multiselectable">
 							<xsl:choose>
 								<xsl:when test="@selectMode='multiple'">

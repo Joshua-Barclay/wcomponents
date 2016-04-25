@@ -1,48 +1,19 @@
-/*
- * wc.ui.table.sort.scss
+/* wc.ui.table.sort.scss */
+@import 'mixins_common.scss';
 
-	Column sorting relate to the sorting of data in sortable tables.
-	This css covers control elements in the heading cells and the rendering of
-	sorted columns.
-
- * TODO: the direction of sort is an attribute of the th element nowso it should be used instead of the aria-pressed state of the control.
- */
-@import "mixins_common.scss";
-
-th[aria-sort] > .decoratedLabel {
-	display: table-cell;
-	vertical-align: middle
-}
-/*
-  sorting controls
-*/
-.wc_table_sort_container {
-	display: table-cell;
-	vertical-align: middle;
-	padding-left: $hgap_large;
-	button { //sort control buttons
-		line-height: 1;
-		text-align: center;
-		@include makeBox($display: block);
-		&:before {//up
-			content: "\25b3";
-			height: $lineSize;
-			line-height: 1;
-			position: relative;
-			top: 0.25em;
-		}
-		+ button:before { //down
-			content: "\25bd";
-			top: -0.25em;
-		}
+th {
+	&[aria-sort] {
+		@include background-image ('../images/down-d.png', $x: 100%);
+		background-position-x: calc(100% - 0.25em);
+		cursor: pointer;
+		padding-right: calc(16px + 0.5em);//allow for 16px image, image position and 0.25em between text and image.
 	}
-	[aria-pressed]:before { //the single control in a column which is already sorted
-		content: "\25b2"; //sorted asc has a sort desc button
-		vertical-align: middle;
-		top: -0.25em;
+
+	&[sorted] {
+		background-image: url('../images/down.png');
 	}
-	[aria-pressed="true"]:before { //sorted desc has a sort asc button
-		content:"\25bc";
+
+	&[sorted~='reversed'] {
+		background-image: url('../images/up.png');
 	}
 }
-/* end wc.ui.table.sort.scss */

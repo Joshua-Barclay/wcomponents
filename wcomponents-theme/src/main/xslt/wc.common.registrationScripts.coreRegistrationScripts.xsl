@@ -33,10 +33,16 @@
 		<xsl:variable name="eagerness" select="//*[@mode='eager']"/>
 		<xsl:variable name="hasAjaxTriggers" select=".//ui:ajaxTrigger"/>
 		<xsl:variable name="timeoutWarn" select=".//ui:session[1]"/>
+		<xsl:variable name="editors" select=".//html:wc-imageedit"/>
 
 		<xsl:if test="$componentGroups">
 			<xsl:text>require(["wc/ui/subordinate"], function(c){c.registerGroups([</xsl:text>
 			<xsl:apply-templates select="$componentGroups" mode="JS"/>
+			<xsl:text>]);});</xsl:text>
+		</xsl:if>
+		<xsl:if test="$editors">
+			<xsl:text>require(["wc/ui/imageEdit"], function(c){c.register([</xsl:text>
+			<xsl:apply-templates select="$editors" mode="JS"/>
 			<xsl:text>]);});</xsl:text>
 		</xsl:if>
 		<xsl:if test="$dialogs">
@@ -121,11 +127,9 @@
 			<xsl:value-of select="//@defaultFocusId[1]"/>
 			<xsl:text>");});</xsl:text>
 		</xsl:if>
-		<xsl:if test="$isIE=1">
-			<xsl:text>require(["wc/has"], function(has){</xsl:text>
-			<xsl:text>if(has("ie")===8){require(["wc/fix/defaultSubmit_ie8"]);}</xsl:text>
-			<xsl:text>});</xsl:text>
-		</xsl:if>
+		<xsl:text>require(["wc/has"], function(has){</xsl:text>
+		<xsl:text>if(has("ie")===8){require(["wc/fix/defaultSubmit_ie8"]);}</xsl:text>
+		<xsl:text>});</xsl:text>
 		<xsl:call-template name="localRegistrationScripts"/>
 	</xsl:template>
 </xsl:stylesheet>

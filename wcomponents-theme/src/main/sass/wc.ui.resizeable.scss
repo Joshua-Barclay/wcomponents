@@ -1,10 +1,9 @@
-/* wc.ui.resizeable.scss
- * Styles for resizeable components and their controlling elements. */
-
-@import "mixins_common.scss";
+/* wc.ui.resizeable.scss */
+@import 'mixins_common.scss';
 
 .wc_max { // maximised:
-	@include borderBox;
+	// scss-lint:disable ImportantRule
+	@include border-box;
 	height: 100% !important;
 	left: 0 !important;
 	overflow: auto;
@@ -13,9 +12,8 @@
 	width: 100% !important;
 }
 
-/* the resize handle */
+// the resize handle
 .wc_resize {
 	cursor: se-resize;
 }
-
-/* end of wc.ui.resizeable.scss */
+/* end wc.ui.resizeable.scss */

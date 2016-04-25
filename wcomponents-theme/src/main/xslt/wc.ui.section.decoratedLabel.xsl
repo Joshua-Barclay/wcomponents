@@ -2,10 +2,7 @@
 	<xsl:import href="wc.common.ajax.xsl"/>
 	<xsl:import href="wc.common.hide.xsl"/>
 	<xsl:import href="wc.constants.xsl"/>
-	<xsl:import href="wc.debug.debugInfo.xsl"/>
-	<xsl:import href="wc.debug.common.contentCategory.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 	<!--
 		WDecoratedLabel allows a labelling element to contain up to three independently
 		stylable areas. The output element of the label and its children is dependent
@@ -24,9 +21,7 @@
 			<xsl:attribute name="id">
 				<xsl:value-of select="@id"/>
 			</xsl:attribute>
-			<xsl:attribute name="class">
-				<xsl:text>decoratedLabel</xsl:text>
-			</xsl:attribute>
+			<xsl:call-template name="makeCommonClass"/>
 			<xsl:call-template name="hideElementIfHiddenSet"/>
 			<xsl:call-template name="ajaxTarget">
 				<xsl:with-param name="live" select="'off'"/>

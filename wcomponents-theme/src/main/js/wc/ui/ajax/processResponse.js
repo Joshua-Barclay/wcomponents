@@ -10,12 +10,11 @@
  * @todo re-order code, document private memebers.
  */
 define(["wc/Observer",
-		"wc/xml/xpath",
 		"wc/dom/tag",
 		"wc/xml/xslTransform",
 		"wc/dom/Widget"],
-	/** @param Observer wc/Observer @param xpath wc/xml/xpath @param tag wc/dom/tag @param xslTransform wc/xml/xslTransform @param Widget wc/dom/Widget @ignore */
-	function(Observer, xpath, tag, xslTransform, Widget) {
+	/** @param Observer wc/Observer @param tag wc/dom/tag @param xslTransform wc/xml/xslTransform @param Widget wc/dom/Widget @ignore */
+	function(Observer, tag, xslTransform, Widget) {
 		"use strict";
 		/**
 		 * @constructor
@@ -86,49 +85,81 @@ define(["wc/Observer",
 			 * @param {module:wc/ajax/Trigger} trigger The trigger which triggered the ajax request.
 			 */
 			this.processResponseXml = function(response, trigger) {
+				var promise;
+				if (response) {
+					promise = new Promise(function(resolve, reject) {
+						var content, doc;
+						if (typeof response === "string") {
+							doc = xslTransform.htmlToDocumentFragment(response);
+							processResponseHtml(doc, trigger);
+							resolve();
+						}
+						else {
+							doc = response.documentElement;
+							if (doc) {
+								content = getPayload(doc);
+								content.then(function(df) {
+									processResponseHtml(df, trigger);
+									resolve();
+								}, logError);
+							}
+							else {
+								reject("Response XML does not appear well formed");
+							}
+						}
+					});
+				}
+				else {
+					promise = Promise.reject("Response XML is empty");
+				}
+				return promise;
+			};
+
+			function processResponseHtml(documentFragment, trigger) {
 				var content, targets,
 					next, targetId, element, doc, action, i;
-				if (response) {
-					doc = response.documentElement;
+				if (documentFragment) {
+					if (documentFragment.querySelector) {
+						doc = documentFragment.querySelector(".wc-ajaxresponse");
+					}
+					else {
+						doc = documentFragment.firstElementChild || documentFragment.firstChild;
+					}
 					if (doc) {
-						targets = xpath.query("//ui:ajaxTarget", false, doc);
-						// if we only have one target continue as before because we know this is
-						// as robust as it gets (ie not very)
+						targets = doc.querySelectorAll(".wc-ajaxtarget");
 						for (i = 0; i < targets.length; ++i) {
 							next = targets[i];
+							next.parentNode.removeChild(next);  // remove the target wrapper
 							if (next.nodeType === Node.ELEMENT_NODE) {
-								targetId = next.getAttribute("id");
+								targetId = next.getAttribute("data-id");
 								element = document.getElementById(targetId);
 								if (element) {
 									/* Since the ui:ajaxResponse is essentially thrown away we need to move any of its interesting attributes to the target element.
 									 * In reality this is to catch the onLoadFocusId attribute but we'll try to pretend it's generic. */
 									mergeAttributes(doc, next);
-									action = next.getAttribute("action");
-									content = getPayload(next);
-									content.then(gotPayloadFactory(element, action, trigger, false), logError);
+									action = next.getAttribute("data-action");
+									content = document.createDocumentFragment();
+									while (next.firstChild) {
+										content.appendChild(next.firstChild);
+									}
+									insertPayloadIntoDom(element, content, action, trigger, false);
 								}
 								else {
 									console.warn("Could not find element", targetId);
 								}
 							}
 						}
-
-						if ((targets = xpath.query("//ui:debug", false, doc)) && targets.length) {
-							for (i = 0; i < targets.length; ++i) {
-								next = targets[i];
-								if (next.nodeType === Node.ELEMENT_NODE) {
-									content = getPayload(next);  // this will be a script element
-									content.then(gotPayloadFactory(document.body, instance.actions.APPEND, null, true), logError);
-								}
-							}
+						// anything left after all the "target" wrappers are done can probably be inserted straight into the DOM (it's probably debug scripts)
+						if (doc.children.length) {
+							document.body.appendChild(documentFragment);
 						}
 					}
 					else {
-						console.warn("Response XML does not appear well formed");
+						console.warn("Response does not appear well formed");
 					}
 				}
 				else {
-					console.warn("Response XML is empty");
+					console.warn("Response is empty");
 				}
 			};
 
@@ -153,12 +184,6 @@ define(["wc/Observer",
 
 			function logError(msg) {
 				console.warn(msg);
-			}
-
-			function gotPayloadFactory(element, action, trigger, doNotPublish) {
-				return function(content) {
-					insertPayloadIntoDom(element, content, action, trigger, doNotPublish);
-				};
 			}
 
 			/*
@@ -367,7 +392,7 @@ define(["wc/Observer",
 						result[result.length] = scripts[i].parentNode.removeChild(scripts[i]);
 					}
 				}
-				catch(ex) {
+				catch (ex) {
 					console.error("Could not extract scripts from content ", ex.message);
 				}
 				return result;

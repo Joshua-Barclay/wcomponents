@@ -133,7 +133,7 @@ define(["wc/array/toArray",
 								}
 							}
 						}
-						catch(err) {
+						catch (err) {
 							console.log("cannot focus element with id " + focusElementId + " " + err.message);
 						}
 					}, 0);
@@ -173,7 +173,7 @@ define(["wc/array/toArray",
 						result = next;
 						break;
 					}
-					catch(e) {
+					catch (e) {
 						result = null;
 					}
 				}
@@ -296,8 +296,6 @@ define(["wc/array/toArray",
 			// http://msdn.microsoft.com/en-us/library/ms534654(VS.85).aspx
 
 			// accepts primary and secondary tabstops for IE
-			// TODO: add in code that says if (IE). Then add another filter for
-			//    if (!IE) for other browsers, if they differ in logic.
 			function standardTabstopFilter(element, instance) {
 				var result = SKIP, tagName;
 				if (element) {

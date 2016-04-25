@@ -89,13 +89,11 @@ define(["wc/has", "wc/ajax/ajax", "wc/xml/xmlString", "wc/xml/xpath", "wc/array/
 							}
 							processor.removeParameter(null, key);
 						}
+						else if (ieMode) {
+							processor.addParameter(key, params[key]);
+						}
 						else {
-							if (ieMode) {
-								processor.addParameter(key, params[key]);
-							}
-							else {
-								processor.setParameter(null, key, params[key]);
-							}
+							processor.setParameter(null, key, params[key]);
 						}
 					}
 				}
@@ -129,7 +127,7 @@ define(["wc/has", "wc/ajax/ajax", "wc/xml/xmlString", "wc/xml/xpath", "wc/array/
 								compiledXslCache[xslUri] = xsltProcessor;
 								console.log("Caching compiled XSL: ", xslUri);
 							}
-							if (has("edge")) {
+							if (has("edge") || has("webkit")) { // the webkit test: chrome on iOS and android still needs this, Safari iOS and UC do not but it does them no harm.
 								resolveIncludes(xsl);
 							}
 						}
@@ -236,7 +234,7 @@ define(["wc/has", "wc/ajax/ajax", "wc/xml/xmlString", "wc/xml/xpath", "wc/array/
 							xslSafe.resolveExternals = true;
 							xslSafe.setProperty("AllowDocumentFunction", true);
 						}
-						catch(ignore) {
+						catch (ignore) {
 							// AllowDocumentFunction may throw an exception on older MSXML engines but we can ignore this.
 						}
 						/*
@@ -285,7 +283,7 @@ define(["wc/has", "wc/ajax/ajax", "wc/xml/xmlString", "wc/xml/xpath", "wc/array/
 					if (has("gecko-xsltprocessor")) {
 						memoizedApplyXsl = leetApplyXsl;
 						// ieApplyXsl = null;  // free up some memory
-						instance.htmlToDocumentFragment = function() {};  // free up some memory
+						// instance.htmlToDocumentFragment = function() {};  // free up some memory
 						result = leetApplyXsl(_xml, _xsl, _asHtml, _xslUri, _params);
 					}
 					else if (has("activex")) {
@@ -353,9 +351,7 @@ define(["wc/has", "wc/ajax/ajax", "wc/xml/xmlString", "wc/xml/xpath", "wc/array/
 							return result;
 						});
 					}
-					else {
-						return Promise.resolve(result);
-					}
+					return Promise.resolve(result);
 				}
 
 				if (args) {
@@ -492,21 +488,25 @@ define(["wc/has", "wc/ajax/ajax", "wc/xml/xmlString", "wc/xml/xpath", "wc/array/
 			 * @returns {DocumentFragment} A documentFragment.
 			 */
 			this.htmlToDocumentFragment = function(html) {  // this is public because we need it in ajaxRegion
-				var result = document.createDocumentFragment(),
+				var result,
 					tmpDF,
 					tmpElement,
 					tmpContainer,
 					next;
-					/*
-					 * I have removed the lines below and it SEEMS to have no ill effects... Perhaps it used to fail due to another condition that no longer exists?
-					 * Anyway if this needs to be reinstated it will need to be a lot more complicated because the string we are stripping may well exist as part of
-					 * the payload provided by the user for display, for example some XML string to be displayed verbatim on the page. I have included a unit test to
-					 * prevent this bug from being reinstated. The two lines below were not well thought out and are not an acceptable solution. It would also blat half
-					 * the darn HTML if the xmlns used single quotes instead and there were double quotes elsewhere in the html.
-					 *
-					 * TWEAKRE = /\sxmlns[^\"]*".*?"/gi;  // Strip out namespace attributes from rendered HTML which break IE if there is an HTML5 element in the html.
-					 * html = html.replace(TWEAKRE, "");
-					 */
+				if (!document) {
+					document = window.document;
+				}
+				result = document.createDocumentFragment();
+				/*
+				 * I have removed the lines below and it SEEMS to have no ill effects... Perhaps it used to fail due to another condition that no longer exists?
+				 * Anyway if this needs to be reinstated it will need to be a lot more complicated because the string we are stripping may well exist as part of
+				 * the payload provided by the user for display, for example some XML string to be displayed verbatim on the page. I have included a unit test to
+				 * prevent this bug from being reinstated. The two lines below were not well thought out and are not an acceptable solution. It would also blat half
+				 * the darn HTML if the xmlns used single quotes instead and there were double quotes elsewhere in the html.
+				 *
+				 * TWEAKRE = /\sxmlns[^\"]*".*?"/gi;  // Strip out namespace attributes from rendered HTML which break IE if there is an HTML5 element in the html.
+				 * html = html.replace(TWEAKRE, "");
+				 */
 				preloadResources(html);
 
 				if (has("ie") < 9) {

@@ -2,9 +2,8 @@
 	<xsl:import href="wc.common.ajax.xsl"/>
 	<xsl:import href="wc.common.inlineError.xsl"/>
 	<xsl:import href="wc.common.popups.xsl"/>
-	<xsl:import href="wc.common.buttonLinkHelpers.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
+	<xsl:import href="wc.common.buttonLinkCommon.xsl"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 	<!--
 		Transform for WLink and WInternalLink. This should be a simple transform to a HTML
 		anchor element. However, as usual things are not that simple.
@@ -45,6 +44,12 @@
 				</xsl:otherwise>
 			</xsl:choose>
 		</xsl:variable>
+		<xsl:variable name="class">
+			<xsl:call-template name="commonClassHelper"/>
+			<xsl:if test="@imagePosition">
+				<xsl:value-of select="concat(' wc_btn_img',@imagePosition)"/>
+			</xsl:if>
+		</xsl:variable>
 		<xsl:element name="{$elementType}">
 			<xsl:choose>
 				<xsl:when test="$elementType='a'">
@@ -62,29 +67,24 @@
 							<xsl:value-of select="ui:windowAttributes/@name"/>
 						</xsl:attribute>
 					</xsl:if>
-					<xsl:if test="@imagePosition">
-						<xsl:attribute name="class">
-							<xsl:value-of select="concat('wc_btn_img',@imagePosition)"/>
-						</xsl:attribute>
-					</xsl:if>
+					<xsl:attribute name="class">
+						<xsl:value-of select="$class"/>
+					</xsl:attribute>
 				</xsl:when>
 				<xsl:otherwise>
 					<xsl:attribute name="type">
 						<xsl:text>button</xsl:text>
 					</xsl:attribute>
-					<xsl:variable name="class">
+					<xsl:attribute name="class">
+						<xsl:value-of select="$class"/>
 						<xsl:if test="not($type='button')">
-							<xsl:text>wc_btn_link</xsl:text>
+							<xsl:text> wc_btn_link</xsl:text>
 						</xsl:if>
-						<xsl:if test="@imagePosition">
-							<xsl:value-of select="concat(' wc_btn_img',@imagePosition)"/>
+						<xsl:if test="@imageUrl and not(@imagePosition)">
+							<xsl:text> wc_btn_img</xsl:text>
 						</xsl:if>
-					</xsl:variable>
-					<xsl:if test="$class !=''">
-						<xsl:attribute name="class">
-							<xsl:value-of select="$class"/>
-						</xsl:attribute>
-					</xsl:if>
+					</xsl:attribute>
+					
 					<xsl:attribute name="${wc.ui.link.attrib.url.standin}">
 						<xsl:value-of select="@url"/>
 					</xsl:attribute>

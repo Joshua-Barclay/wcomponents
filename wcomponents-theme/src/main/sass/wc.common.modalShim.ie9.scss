@@ -1,6 +1,7 @@
-/* wc.common.modalShim.ie9.css */
-#wc_shim{
-	background-color:transparent;
-	background-image: url(../images/modalShim.png)
+/* wc.common.modalShim.ie9.scss */
+// scss-lint:disable IdSelector
+#wc_shim {
+	background-color: transparent;
+	background-image: url('../images/shim.png');
 }
-/* wc.common.modalShim.ie9.css*/
+/* end wc.common.modalShim.ie9.scss */

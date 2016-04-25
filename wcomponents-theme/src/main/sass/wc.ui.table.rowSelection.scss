@@ -1,31 +1,79 @@
-/* wc.ui.table.rowSelection.css */
-@import "wc.ui.table.rowSelection_vars.scss";
+/* wc.ui.table.rowSelection.scss */
+@import 'wc.ui.table.rowSelection_vars.scss';
+@import 'wc.ui.menu_vars.scss';
 
-tr[aria-checked] {
-	&:hover, &:focus {
+// only want to style aria-selected rows, nothing else
+tr[aria-selected] {
+	&:hover,
+	&:focus {
+		@include row-invite;
 		cursor: pointer;
-		@include rowInvite;
+	}
+
+	> .wc_table_sel_wrapper {
+		@include background-image($url: '../images/radio.png', $width: 1em, $height: 1em);
+
+		.wc_table_hastoggleselect & {
+			background-position: $table-cell-padding-left-right 50%;
+			padding-left: $table-cell-padding-left-right + 1em;
+		}
+   }
+}
+
+.wc_table_sel_wrapper {
+	tr[aria-selected='true'] > & {
+		background-image: url('../images/radio-s.png');
+	}
+
+	tr[aria-disabled='true'] > & {
+		background-image: url('../images/radio-d.png');
+	}
+
+	.wc_seltog  button + button::before { // remove select toggle list separator
+		display: none;
+	}
+
+	[role='menubar'] .submenu > button { // the is the submenu opener emulator for the sub-row toggle control
+		@include button($background: $wc-ui-color-menu-bg, $height: -1, $padding: 0, $width: 1em, $reset-height: -1, $reset-width: -1);
+		height: calc(1em - 2px);
+		position: relative;
+		top: 2px;
+
+		&::after {
+			background-position: 50% 50%;
+			background-size: 0.667em;
+			height: calc(1em - 2px); // allow for the border
+			margin-left: 0; // remove submenu opener indicator margin
+			width: 1em;
+		}
 	}
 }
 
-.wc_table_sel_wrapper::before {
-	display: block;
-	width: 1em;
-	height: $lineSize;
-	[role="radio"] > & {
-		content: url(../images/radio.svg);
-	}
-	[role="radio"][aria-checked="true"] > & {
-		content: url(../images/radio-s.svg);
-	}
-	[role="checkbox"] > & {
-		content: url(../images/checkbox.svg);
-	}
-	[role="checkbox"][aria-checked="true"] > & {
-		content: url(../images/checkbox-s.svg);
-	}
-	[aria-checked][aria-disabled="true"] > & {
-		opacity: $disabledOpacity;
+[aria-multiselectable='true'] > tbody {
+	> tr {
+		&[aria-selected] {
+			> .wc_table_sel_wrapper {
+				background-image: url('../images/checkbox.png');
+			}
+
+			&[aria-disabled='true'] > .wc_table_sel_wrapper {
+				background-image: url('../images/checkbox-d.png');
+			}
+		}
+
+		&[aria-selected='true'] {
+			> .wc_table_sel_wrapper {
+				background-image: url('../images/checkbox-s.png');
+			}
+
+			&[aria-disabled='true'] > .wc_table_sel_wrapper {
+				background-image: url('../images/checkbox-s-d.png');
+			}
+		}
 	}
 }
-/* end wc.ui.table.rowSelection.css */
+
+.wc_table_col_hasmenu {
+	// text-align: right;
+	width: 2em;
+}

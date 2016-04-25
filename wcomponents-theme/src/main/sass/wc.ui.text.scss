@@ -1,27 +1,23 @@
-/* wc.ui.text.scss
- * ui:text is WStyledText and is used to set an enumerated set of
- * styles on html span elements each class is the type attribute
- * of the ui:text element*/
+/* wc.ui.text.scss */
+//WStyledText - not WText
+@import 'mixins_common.scss';
 
-/* high, medium and low priority:
- * use of an image is not ideal but is more accessible than using a foreground color change */
-@import "mixins_common.scss";
-
-.highPriority {
-	color: $wc_ui_color_errorForeground;
-	background-color: $wc_ui_color_errorBackground;
-	padding: 0 $hgap_small;
-	@include outline($color: $wc_ui_color_errorForeground, $style: double, $width: 3px);
+.highPriority { //strong element
+	@include outline($color: $wc-ui-color-error-fg, $style: double, $width: 3px);
+	background-color: $wc-ui-color-error-bg;
+	color: $wc-ui-color-error-fg;
+	padding: 0 $hgap-small;
 }
-.mediumPriority {
-	padding: 0 $hgap_small;
-	color: $wc_ui_color_warningForeground;
-	background-color: $wc_ui_color_globalBackground;
-	@include outline($color: $wc_ui_color_warningForeground);
+
+.mediumPriority { //em element
+	@include outline($color: $wc-ui-color-warning-fg);
+	background-color: $wc-ui-color-global-bg;
+	color: $wc-ui-color-warning-fg;
+	padding: 0 $hgap-small;
 }
 
 .mandatoryIndicator:after {
-	@include mandatoryIndicator;
-	margin-left: $hgap_small;
+	@include mandatory-indicator;
+	margin-left: $hgap-small;
 }
 /* end wc.ui.text.scss */

@@ -1,147 +1,242 @@
-/*
-  wc.ui.dateField.scss
+/* wc.ui.dateField.scss */
 
-  styling specific to the date input component including the calendar
-  NOTE: unusually we use a single ID'd component for all calendar date pickers
-  and move it around to where it is needed. We do not usually use IDs in this
-  framework, but we like exceptions.
-*/
-@import "mixins_common.scss";
+// Styling specific to the date input component including the calendar.
+
+// We use a single ID'd component for all calendar date pickers and move it around to where it is needed.
+//scss-lint:disable IdSelector
+@import 'mixins_common.scss';
 
 .dateField {
 	display: inline-block;
 	position: relative;
-	&[role="combobox"] {/* partial date field or no native support */
-		@include border($color: $wc_ui_color_border_formControl);
-		&[aria-disabled="true"] {
-			background-color: $wc_ui_color_disabledBackground;
+
+	&[role='combobox'] {//partial date field or no native support
+		@include border($color: $wc-ui-color-border-form-control);
+
+		&[aria-disabled='true'] {
+			background-color: $wc-ui-color-disabled-bg;
 		}
 	}
 }
-[role="combobox"][aria-expanded="false"] > [role="listbox"] {
-	display: none;
-}
 
-[role="combobox"] > input,
+[role='combobox'] > input,
 .wc_wdf_cal {
-	vertical-align: middle
+	vertical-align: middle;
 }
 
-[role="combobox"] {
+[role='combobox'] {
 	> input {
-		border:0 none !important;
+		// important to remove invalid state border
+		// scss-lint:disable ImportantRule
+		border: 0 none !important;
 	}
-	> [role="listbox"] {
-		background-color: $wc_ui_color_globalBackground;
+
+	> [role='listbox'] {
 		@include border;
-		position: absolute;
-		left: $borderWidth * -1;
+		background-color: $wc-ui-color-global-bg;
+		left: $border-width * -1;
+		list-style-type: none;
+		margin: 0;
 		min-width: 100%;
 		padding: 0;
-		margin: 0;
-		list-style-type: none;
+		position: absolute;
 		z-index: 2;
 	}
-	li{
-		padding: 1px $hgap_small;
-		min-height: 1em;
-		margin: 0
+
+	&[aria-expanded='false'] > [role='listbox'] {
+		display: none;
 	}
-	[role="option"] {
-		&:hover, &:focus {
-			background-color: $wc_ui_color_invite_bg;
+
+	li {
+		margin: 0;
+		min-height: 1em;
+		padding: 1px $hgap-small;
+	}
+
+	[role='option'] {
+		&:hover,
+		&:focus {
+			background-color: $wc-ui-color-invite-bg;
 			cursor: pointer;
 		}
 	}
 }
 
-dialog [role="combobox"] > [role="listbox"]{
-	z-index:22;
+dialog [role='combobox'] > [role='listbox'] {
+	z-index: 22;
 }
 
-/* calendar launch button */
+// calendar launch button
 .wc_wdf_cal {
-	&:hover, &:focus {
-		background-color: $wc_ui_color_invite_bg;
+	@include background-image-icon('../images/date.png');
+	@include button($border: 0);
+	@include border($pos: left);
+
+	&:hover,
+	&:focus {
+		background-color: $wc-ui-color-invite-bg;
 	}
-	&:before {
-		content: url("../images/date.png");
-		position: relative;
-		top: 2px;
-	}
-	&[disabled]:before {
-		content: url("../images/date-d.png");
+
+	&[disabled] {
+		background-image: url('../images/date-d.png');
 	}
 }
 
-/* This is the calendar container. The important is to override hidden from being inside a closed combo. */
+// This is the calendar container. The important is to override hidden from being inside a closed combo.
 #wc-calbox {
-	background-color: $wc_ui_color_globalBackground;
+	background-color: $wc-ui-color-global-bg;
 	white-space: nowrap;
 	z-index: 2;
-	&[hidden] {/*override of override */
-		display: none !important
+
+	&[hidden] { // override of override
+		//scss-lint:disable ImportantRule
+		display: none !important;
+	}
+
+	dialog & {
+		z-index: 22;
 	}
 }
-dialog #wc-calbox {
-	z-index:22
-}
 
-/* The calendar table */
+// The calendar table
 #wc-calendar {
 	thead {
 		@include border($pos: bottom);
-		td:last-child { /* container of the close button */
-			padding-right: 0;
+
+		td:last-child { // container of the close button
 			text-align: right;
 		}
 	}
+
 	th {
-		background-color: $wc_ui_color_highlight_bg;
-		color: $wc_ui_color_highlight_fg;
-		padding: $vgap_small $hgap_small;
+		background-color: $wc-ui-color-highlight-bg;
+		color: $wc-ui-color-highlight-fg;
+		padding: $vgap-small $hgap-small;
 		text-align: center;
 	}
-	input, thead button:first-of-type {
-		margin-left: $hgap_large;
+
+	input,
+	thead button:first-of-type {
+		margin-left: $hgap-large;
 	}
-	input { /* year field: FF and IE do not size by max.*/
-		width: 5em
+
+	input { // year field: FF and IE do not size by max.
+		width: 5em;
 	}
-	abbr { /* days of the week */
-		border-bottom: 0 none
+
+	abbr { // days of the week
+		border-bottom: 0 none;
 	}
 }
 
 #wc-caldaybox td {
+	color: $wc-ui-color-disabled-fg;
 	padding: 0;
-	color: $wc_ui_color_disabledForeground;
 	text-align: center;
 	vertical-align: middle;
 }
 
-/* date picker buttons */
+// date picker buttons
 .wc_wdf_pick {
-	text-align: center;
-	padding: $vgap_small $hgap_small;
+	color: $wc-ui-color-global-fg;
 	cursor: pointer;
-	color: $wc_ui_color_globalForeground;
-	width: 100%;
-	&:hover, &:focus {
-		background-color: $wc_ui_color_invite_bg;
+	padding: $vgap-small $hgap-small;
+	text-align: center;
+	width: 3em;
+	min-width: 100%;
+
+	&:hover,
+	&:focus {
+		background-color: $wc-ui-color-invite-bg;
 	}
+
 	&[disabled] {
-		color: $wc_ui_color_disabledForeground;
-		background-color: $wc_ui_color_disabledBackground;
+		background-color: $wc-ui-color-disabled-bg;
+		color: $wc-ui-color-disabled-fg;
 	}
-	&[aria-pressed='true'] {/* selected date */
-		background-color: $wc_ui_color_highlight_bg;
-		color: $wc_ui_color_highlight_fg;
+
+	&[aria-pressed='true'] { // selected date
+		background-color: $wc-ui-color-highlight-bg;
+		color: $wc-ui-color-highlight-fg;
 	}
 }
 
-/* today */
-.wc_wdf_today {
-	outline:1px solid $wc_ui_color_border;
+.wc_wdf_today { // today
+	@include outline();
 }
-/* end wc.ui.dateField.css*/
+
+
+// The main purpose of this CSS is to make the pop-up calendar full screen. We make all of the buttons bigger to make
+// them easier for fingers to push and finally add a close button to make up for the lack of an escape key.
+// The calendar container is a single generated element with a fixed id.
+@include respond(mobile) {
+	#wc-calbox {
+		height: 100%;
+		left: 0;
+		position: fixed;
+		top: 0;
+		width: 100%;
+	}
+
+	#wc-calendar {
+		font-size: 1.5em;
+		height: 100%;
+
+		thead {
+			tr {
+				vertical-align: middle;
+			}
+
+			td { // The td in the thead contain the form controls to change the date or close the calendar.
+				padding: $hgap-normal;
+			}
+
+			button {
+				background-color: transparent;
+				border: 0 none;
+				margin-left: $hgap-normal;
+				padding: 0;
+				vertical-align: middle;
+
+				&::before {
+					@include make-box;
+				}
+			}
+		}
+
+		th { // The th contain the day name addreviations.
+			font-size: 1em;
+		}
+	}
+
+	.wc_wdf_mv {
+		&[value='-1']::before {
+			content: url('../images/cal-mob-back1.svg');
+		}
+
+		&[value='1']::before {
+			content: url('../images/cal-mob-forward1.svg');
+		}
+
+		&[value='t']::before {
+			content: url('../images/cal-mob-today.svg');
+		}
+	}
+
+	.wc_wdf_cls::before {
+		content: url('../images/cal-mob-close.svg');
+	}
+
+	#wc-caldaybox .wc_wdf_pick {
+		height: 100%;
+		width: 100%;
+	}
+}
+
+// need this AFTER the general mobile respond
+// scss-lint:disable MergeableSelector
+#wc-calendar {
+	@include respond(ipad) { // weird iOS9 bug
+		max-height: 704px;
+	}
+}

@@ -6,9 +6,9 @@
 	<artifactId>wcomponents-app-archetype</artifactId>
 
 	<parent>
-		<groupId>com.github.bordertech</groupId>
+		<groupId>com.github.bordertech.wcomponents</groupId>
 		<artifactId>wcomponents-parent</artifactId>
-		<version>1.0.0-SNAPSHOT</version>
+		<version>1.0.4-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 

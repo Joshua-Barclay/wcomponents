@@ -1,61 +1,108 @@
 /* wc.ui.fileUpload.scss */
-@import "mixins_common.scss";
+@import 'mixins_common.scss';
+
+%a-button {
+	display: inline-block;
+	vertical-align: top;
+}
+
 .fileUpload {
+	a {
+		@extend %a-button;
+		@include flex-grow(1);
+		@include flex-shrink(1);
+		max-width: calc(100% - #{$line-size});
+
+		img {
+			max-width: 100%;
+		}
+
+		~ button {
+			@extend %a-button;
+			@include flex-shrink(0);
+			@include button;
+			@include background-image-icon('../images/delete.png');
+			margin-left: $hgap-small;
+
+			&[disabled] {
+				background-image: url('../images/delete-d.png');
+			}
+		}
+	}
+
+	.file {
+		@include flex($justify: space-between, $align-items: flex-start);
+		@include border;
+		background-color: $wc-ui-color-highlight-bg;
+		color: $wc-ui-color-highlight-fg;
+		padding: $hgap-small;
+		word-wrap: break-word;
+	}
+
 	> .wc_filelist {
 		display: table-cell;  // horrendously wrong no doubt but fixes columns
-		margin-top: $hgap_small;
+		padding-top: $hgap-small;
+
+		.file + .file {
+			margin-top: $vgap-normal;
+		}
+
 		&.wc_list_flat {
 			.file {
 				display: inline-block;
-				margin-right: $hgap_small;
-				margin-top: $hgap_small;
+				margin-right: $hgap-small;
+				margin-top: $hgap-small;
+
+				// The excessive depth here could be re-written I suppose...
+				// scss-lint:disable NestingDepth
 				&:last-child {
 					margin-right: 0;
 				}
+				// scss-lint:enable NestingDepth
 			}
+
 			a {
 				width: auto;
 			}
 		}
-		> .file + .file {
-			margin-top: $vgap_normal;
-		}
 	}
+
 	&[data-wc-cols] {
 		> div {
 			@include flex($justify: space-between);
-			margin-top: $hgap_small;
+			margin-top: $hgap-small;
 		}
+
 		ul {
-			@include flexGrow(1);
+			@include flex-grow(1);
+
+			+ ul {
+				margin-left: $hgap-small;
+			}
+		}
+
+		li + li {
+			margin-top: $hgap-small;
 		}
 	}
-	.file {
-		@include border;
-		padding: $hgap_normal;
-		background-color: $wc_ui_color_highlight_bg;
-		color: $wc_ui_color_highlight_fg;
-		white-space: nowrap;
+
+
+	&.wc_dragging [type=file] {
+		background-color: $wc-ui-color-invite-bg;  //#c0ffee
+		outline: 2px dotted $wc-ui-color-invite-fg;
 	}
-	&.wc_dragging input[type=file] {
-		outline: 2px dotted $wc_ui_color_invite_fg;
-		background-color: $wc_ui_color_invite_bg;  //#c0ffee
+
+	.wc_btn_camera {
+		@include button($width: 1em, $height: 1em);
+		@include background-image($url: '../images/camera-web.png', $height: 1em, $width: 1em);
 	}
-	button {
-		margin-left: $hgap_small;
-		&:before {
-			content: url(../images/edit-delete-2.png);
+
+	input[type='file'][data-editor] {
+		max-width: calc(100% - 2em); // leave room for the edit button.
+
+		&,
+		+ button {
+			vertical-align: bottom;
 		}
-		&[disabled]:before {
-			content: url(../images/edit-delete-2-d.png);
-		}
-	}
-	a, a ~ button {
-		display: inline-block;
-		vertical-align: top;
-	}
-	a {
-		width: calc(100% - #{$lineSize});
 	}
 }
-/* end wc.ui.fileUpload.scss */

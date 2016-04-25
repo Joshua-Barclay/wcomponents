@@ -22,7 +22,7 @@
 	"use strict";
 	define(["wc/has"],
 		function(has) {
-			var result = ["dojo/sniff"];
+			var result = ["lib/dojo/sniff"];
 
 			(function(addtest) {
 				// This block taken from tests from hasjs project. Didn't want to load the whole script.
@@ -50,7 +50,7 @@
 						input = d.createElement("<input type='hidden' name='hasjs'>");
 						supported = input.type === "hidden" && input.name === "hasjs";
 					}
-					catch(e) {
+					catch (e) {
 						// Do nothing
 					}
 					return supported;
@@ -122,6 +122,11 @@
 					return ("createTreeWalker" in d);
 				});
 
+				addtest("dom-canvas", function(g, d) {
+					var e = d.createElement("canvas");
+					return !!(e.getContext && e.getContext("2d"));
+				});
+
 				addtest("dom-comparedocumentposition", function(g, d, el) {
 					return ("compareDocumentPosition" in el);
 				});
@@ -178,11 +183,15 @@
 						try {
 							s.trim();
 						}
-						catch(e) {
+						catch (e) {
 							result = false;  // not good enough to count
 						}
 					}
 					return result;
+				});
+
+				addtest("device-mobile", function() {
+					return has("ios") || has("android") || has("iemobile") || has("operamobi") || has("operamini") || has("bb");
 				});
 
 				addtest("element-datalist", function() {
@@ -200,13 +209,13 @@
 						el.type = d;
 						result = d === el.type;
 					}
-					catch(e) {
+					catch (e) {
 						result = false;
 					}
 					finally {
 						el = null;
-						return result;
 					}
+					return result;
 				});
 
 				function hasWorkingObjectDefineProperty(g, obj) {
@@ -214,11 +223,10 @@
 					if (result) {  // it has defineProperty but does it work?
 						try {
 							g.Object.defineProperty(obj, "id", { get: function() {
-									return "c";
-								}
-							});
+								return "c";
+							}});
 						}
-						catch(ex) {
+						catch (ex) {
 							result = false;  // this is not a working defineProperty (i.e. perhaps Safari 5 which does not support defineProperty on DOM objects)
 						}
 					}
@@ -321,7 +329,7 @@
 
 			if (!has("function-bind")) {
 				/*
-				 * TODO: this is an ugly fix for an IE8 race condition exacerbated by
+				 * NOTE: this is an ugly fix for an IE8 race condition exacerbated by
 				 * the memory leak issue fixed by a MS hotfix: see KB2032595.
 				 * result.push("wc/ecma5/Function.prototype.bind");
 				 */
@@ -407,12 +415,12 @@
 			 */
 			if (!(has("global-performance") || has("dom-addeventlistener"))) {
 				window.attachEvent("onload", function() {
-						if (window.requirejs) {
-							window.requirejs.config({config: {"wc/compat/navigationTiming": {
-								"loadEventStart": ((new Date()) * 1),/* NOTE: our polyfill of Date.now() has not yet loaded */
-								"loadEventEnd": ((new Date()) * 1)}}});
-						}
-					});
+					if (window.requirejs) {
+						window.requirejs.config({config: {"wc/compat/navigationTiming": {
+							"loadEventStart": ((new Date()) * 1),/* NOTE: our polyfill of Date.now() has not yet loaded */
+							"loadEventEnd": ((new Date()) * 1)}}});
+					}
+				});
 			}
 
 			result.load = function (id, parentRequire, callback) {

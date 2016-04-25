@@ -62,6 +62,7 @@ define(["wc/has",
 			ROLE_ATTRIB = "role",
 			AJAX_CONTEXTLESS_ITEM,
 			postAjaxTimer,
+			focusTimer,
 			TRUE = "true",
 			fixedWidgets,
 			CLASS = {
@@ -115,7 +116,7 @@ define(["wc/has",
 		 * @returns {Object} an object containing properties the values of which are Widgets.
 		 */
 		function setupFixedWidgets() {
-			var branchWidget = new Widget("", "submenu", { "aria-expanded": null }),
+			var branchWidget = new Widget("", "submenu"),
 				branchTriggerWidget = new Widget(BUTTON);
 			branchTriggerWidget.descendFrom(branchWidget, true);
 			return {
@@ -297,21 +298,12 @@ define(["wc/has",
 		function getNavigationTreeWalkerFilter(ignoreClosed, instance, letter) {
 			return function(element) {
 				// treeWalker filter function that provides the core Abstract Tree View of the menu
-				var result = NodeFilter.FILTER_SKIP,
-					branch;
-
-				if (shed.isDisabled(element) || shed.isHidden(element)) {
-					result = NodeFilter.FILTER_REJECT;
-				}
-				else if (isItem(element, instance)) {
-					// branch or leaf
-					result = NodeFilter.FILTER_ACCEPT;
-				}
+				var branch, result = canNavigate(element, instance);
 
 				// skip over closed branches
 				if (ignoreClosed && result !== NodeFilter.FILTER_REJECT && instance._wd.submenu.isOneOfMe(element)) {
-					if ((branch = instance._getBranch(element))) {  // should always be true
-						if (!shed.isExpanded(branch)) {
+					if ((branch = instance._getBranch(element))) { // should always be true
+						if (!shed.isExpanded(instance._getBranchExpandableElement(branch))) {
 							result = NodeFilter.FILTER_REJECT;
 						}
 					}
@@ -326,6 +318,27 @@ define(["wc/has",
 				}
 				return result;
 			};
+		}
+
+		/**
+		 * Helper for getNavigationTreeWalkerFilter.
+		 * Determines if the current element is navigable, e.g. it is not disabled or hidden etc.
+		 * @param element Anelement, as passed to getNavigationTreeWalkerFilter
+		 * @param instance A menu instance as passed to getNavigationTreeWalkerFilter
+		 * @returns {Number} A NodeFilter value.
+		 * @function
+		 * @private
+		 */
+		function canNavigate(element, instance) {
+			var result = NodeFilter.FILTER_SKIP;
+			if (shed.isDisabled(element) || shed.isHidden(element)) {
+				result = NodeFilter.FILTER_REJECT;
+			}
+			else if (isItem(element, instance)) {
+				// branch or leaf
+				result = NodeFilter.FILTER_ACCEPT;
+			}
+			return result;
 		}
 
 		/**
@@ -438,7 +451,7 @@ define(["wc/has",
 					if (this._isOpener(item)) {
 						item = this._getBranch(item);
 					}
-					if (item && this._isBranch(item) && !shed.isExpanded(item)) {
+					if (item && this._isBranch(item) && !shed.isExpanded(this._getBranchExpandableElement(item))) {
 						this[FUNC_MAP.OPEN](item);
 					}
 				}
@@ -915,7 +928,11 @@ define(["wc/has",
 						doCollisionDetection(element, this);
 					}
 					if ((subItem = getFirstAvailableItem(element, this))) {
-						this._focusItem(subItem, root);
+						if (focusTimer) {
+							timers.clearTimeout(focusTimer);
+							focusTimer = null;
+						}
+						timers.setTimeout(this._focusItem.bind(this), 0, subItem, root);
 					}
 				}
 				/* last thing to do: make sure we have not lost focus by replacing the focused element. */
@@ -930,7 +947,7 @@ define(["wc/has",
 								focus.focusFirstTabstop(element);
 							}
 						}
-					}, 100);
+					}, 150);
 				}
 			}
 		}
@@ -986,74 +1003,123 @@ define(["wc/has",
 		function shedSubscriber(element, action) {
 			var opener,
 				root,
-				isTransient,
-				shedFunc,
-				contentId,
-				content,
-				CONTENT_ATTRIB = "aria-controls",
-				subItem;
+				branch,
+				isTransient;
 
 			if (element && (root = this._getRoot(element))) {
 				isTransient = isMenuTransient(root, this);
 
 				if (action === shed.actions.ENABLE || action === shed.actions.DISABLE) {
-					if (this._isBranch(element)) {
-						shedFunc = action === shed.actions.DISABLE ? "disable" : "enable";
-						if (isTransient) {
-							// close the submenu
-							if (action === shed.actions.DISABLE && shed.isExpanded(element)) {
-								shed.collapse(element);  // do not call this[FUNC_MAP.CLOSE] because we don't want all the animate gubbins
-							}
-						}
-						// dis/en-able the opener
-						shed[shedFunc](this._getBranchOpener(element));
-						// disable or re-enable stuff inside the submenu
-						disableInBranch(element, shedFunc, this);
-					}
-					// branches and items when disabled: may have to change default tabstop
-					if (action === shed.actions.DISABLE) {
-						hideDisableHelper(element, root, this);
-					}
+					enableDisable(element, action, root, isTransient, this);
 				}
 				else if (action === shed.actions.HIDE) {
 					hideDisableHelper(element, root, this);
 				}
 				else if (isTransient) {
 					// collision detection on branch open
-					if ((action === shed.actions.EXPAND || action === shed.actions.COLLAPSE) && this._isBranch(element) && (opener = this._getBranchOpener(element))) {
-						if (action === shed.actions.EXPAND) {
-							openMenu = root.id;
-							if ((contentId = opener.getAttribute(CONTENT_ATTRIB)) && (content = document.getElementById(contentId))) {
-								if (!this.isMobile) {
-									doCollisionDetection(content, this);
-								}
-								if ((subItem = getFirstAvailableItem(content, this))) {
-									timers.setTimeout(this._focusItem.bind(this), 0, subItem, root);
-								}
-							}
+					if (action === shed.actions.EXPAND || action === shed.actions.COLLAPSE) {
+						if (this._isBranch(element)) { // tree
+							branch = element;
+							opener = this._getBranchOpener(branch);
 						}
-						else if (action === shed.actions.COLLAPSE && (contentId = opener.getAttribute(CONTENT_ATTRIB)) && (content = document.getElementById(contentId))) {
-							classList.remove(content, CLASS.DEFAULT_DIRECTION);
-							classList.remove(content, CLASS.AGAINST_DEFAULT);
-							classList.remove(content, CLASS.COLLIDE_SOUTH);
-							content.style.bottom = "";
-							content.removeAttribute("style");
+						else if (this._wd.submenu.isOneOfMe(element) && (branch = this._getBranch(element))) {
+							opener = this._getBranchOpener(branch);
+						}
 
-							// if the focus point is inside the branch then refocus to the opener
-							if ((opener !== document.activeElement) && (element.compareDocumentPosition(document.activeElement) & Node.DOCUMENT_POSITION_CONTAINED_BY)) {
-								this._focusItem(opener, root);
-							}
-							else {
-								this._remapKeys(opener, root);
-								// we still have to reset the tabIndex
-								setTabstop(opener, this);
-							}
-						}
+						expandCollapseTransientBranch(branch, action, root, opener, this);
 					}
 				}
-				else if (action === shed.actions.COLLAPSE && (opener = this._getBranchOpener(element))) {
+				else if (action === shed.actions.COLLAPSE) {
+					if (this._isBranch(element)) { // tree
+						opener = this._getBranchOpener(element);
+					}
+					else if (this._wd.submenu.isOneOfMe(element) && (branch = this._getBranch(element))) {
+						opener = this._getBranchOpener(branch);
+					}
 					this._focusItem(opener, root);
 				}
+			}
+		}
+
+		/**
+		 * Gets the content controlled by a menu.
+		 * @param {Element} opener The control that triggers a menu to "open".
+		 * @function
+		 * @private
+		 * @returns {Element} The content controlled by the menu opener if found.
+		 */
+		function getContent(opener) {
+			var content,
+				CONTENT_ATTRIB = "aria-controls",
+				contentId = opener.getAttribute(CONTENT_ATTRIB);
+			if (contentId) {
+				content = document.getElementById(contentId);
+			}
+			return content;
+		}
+
+
+		/*
+		 * Helper for shedSubscriber.
+		 * @function
+		 * @private
+		 */
+		function expandCollapseTransientBranch(element, action, root, opener, instance) {
+			var subItem, content = getContent(opener);
+			if (action === shed.actions.EXPAND) {
+				openMenu = root.id;
+				content = getContent(opener);
+				if (content) {
+					if (!instance.isMobile) {
+						doCollisionDetection(content, instance);
+					}
+					if ((subItem = getFirstAvailableItem(content, instance))) {
+						timers.setTimeout(instance._focusItem.bind(instance), 0, subItem, root);
+					}
+				}
+			}
+			else if (action === shed.actions.COLLAPSE && (content = getContent(opener))) {
+				classList.remove(content, CLASS.DEFAULT_DIRECTION);
+				classList.remove(content, CLASS.AGAINST_DEFAULT);
+				classList.remove(content, CLASS.COLLIDE_SOUTH);
+				content.style.bottom = "";
+				content.removeAttribute("style");
+
+				// if the focus point is inside the branch then refocus to the opener
+				if ((opener !== document.activeElement) && (element.compareDocumentPosition(document.activeElement) & Node.DOCUMENT_POSITION_CONTAINED_BY)) {
+					instance._focusItem(opener, root);
+				}
+				else {
+					instance._remapKeys(opener, root);
+					// we still have to reset the tabIndex
+					setTabstop(opener, instance);
+				}
+			}
+		}
+
+		/*
+		 * Helper for shedSubscriber.
+		 * @function
+		 * @private
+		 */
+		function enableDisable(element, action, root, isTransient, instance) {
+			var shedFunc, branch;
+			if (instance._isBranch(element)) {
+				shedFunc = action === shed.actions.DISABLE ? "disable" : "enable";
+				if (isTransient) {
+					// close the submenu
+					if (action === shed.actions.DISABLE && (branch = instance._getBranchExpandableElement(element)) && shed.isExpanded(branch)) {
+						shed.collapse(branch); // do not call this[FUNC_MAP.CLOSE] because we don't want all the animate gubbins
+					}
+				}
+				// dis/en-able the opener
+				shed[shedFunc](instance._getBranchOpener(element));
+				// disable or re-enable stuff inside the submenu
+				disableInBranch(element, shedFunc, instance);
+			}
+			// branches and items when disabled: may have to change default tabstop
+			if (action === shed.actions.DISABLE) {
+				hideDisableHelper(element, root, instance);
 			}
 		}
 
@@ -1066,10 +1132,19 @@ define(["wc/has",
 		 */
 		function writeState(container, toContainer) {
 			var _widgets,
-				root;
+				root,
+				branchItem;
 
 			function writeExpandedState(nextSubmenu) {
-				var name = nextSubmenu.id;
+				var name;
+
+				if (this._isBranch(nextSubmenu)) { // tree
+					name = nextSubmenu.id;
+				}
+				else if (this._wd.submenu.isOneOfMe(nextSubmenu) && (branchItem = this._getBranch(nextSubmenu))) { // menu
+					name = branchItem.id;
+				}
+
 				if (name) {
 					formUpdateManager.writeStateField(toContainer, name + "${wc.ui.menu.submenu.nameSuffix}", TRUE);
 				}
@@ -1083,11 +1158,22 @@ define(["wc/has",
 			}
 
 			function writeMenuState(next, includeMenu) {
-				Array.prototype.forEach.call(getFilteredGroup(next, {
+				/* Cannot use getFilteredGroup for expandables any more.
+				 * Why not?
+				 * Well:
+				 * 1. roles menu and menubar do not include role menu as a scoped role;
+				 * 2. roles menuitem, menuitemradio and menuitemcheckbox do not support aria-expanded
+				 * 3. therefore we cannot use scoped roles to get the group of expanded menu items.
+				 * Array.prototype.forEach.call(getFilteredGroup(next, {
 					filter: (getFilteredGroup.FILTERS.expanded | getFilteredGroup.FILTERS.enabled),
 					ignoreInnerGroups: true
 				}),
-				writeExpandedState, this);
+				writeExpandedState, this);*/
+
+				(toArray(this.getFixedWidgets().BRANCH.findDescendants(next))).filter(function(nextBranch) {
+					return !shed.isDisabled(nextBranch) && shed.isExpanded(this._getBranchExpandableElement(nextBranch));
+				}, this).forEach(writeExpandedState, this);
+
 				Array.prototype.forEach.call(getFilteredGroup(next, {
 					filter: (getFilteredGroup.FILTERS.selected | getFilteredGroup.FILTERS.enabled),
 					ignoreInnerGroups: true
@@ -1110,7 +1196,7 @@ define(["wc/has",
 					}
 				}
 			}
-			catch(ex) {
+			catch (ex) {
 				console.log(ex);
 				throw ex;
 			}
@@ -1332,6 +1418,37 @@ define(["wc/has",
 		};
 
 		/**
+		 * Get the menu element which is able to be "aria-expanded". This is the WSubMenu's content in most menus but
+		 * is the WSubMenu itself in trees.
+		 *
+		 * @function
+		 * @protected
+		 * @param {Element} item The start point for the search. This will normally be a 'branch'.
+		 * @returns {?Element} The "expandable" element. This is usually the branch content but is the branch in trees.
+		 */
+		AbstractMenu.prototype._getBranchExpandableElement = function (item) {
+			var myBranch;
+
+			if (!item) {
+				throw new TypeError("Item must not be undefined.");
+			}
+
+			if (this._wd.submenu.isOneOfMe(item)) {
+				return item;
+			}
+
+			if (this._isBranch(item)) {
+				return this._getSubMenu (item, true);
+			}
+
+			if (this._isOpener(item) && (myBranch = this._getBranch(item))) {
+				return this._getSubMenu (myBranch, true);
+			}
+
+			throw new TypeError("Item must be a branch, submenu or branch opener element.");
+		};
+
+		/**
 		 * Gets the nearest submenu element relative to a start point in the direction specified.
 		 * @function
 		 * @protected
@@ -1341,12 +1458,15 @@ define(["wc/has",
 		 * @returns {?Element} A submenu element if found.
 		 */
 		AbstractMenu.prototype._getSubMenu = function(item, descending) {
-			var result = null,
-				up = !descending;  // mostly look up not down
+			var up = !descending;  // mostly look up not down
+
 			if (this._getRoot(item)) {
-				result = up ? this._wd.submenu.findAncestor(item) : this._wd.submenu.findDescendant(item);
+				if (this._wd.submenu.isOneOfMe(item)) {
+					return item;
+				}
+				return up ? this._wd.submenu.findAncestor(item) : this._wd.submenu.findDescendant(item);
 			}
-			return result;
+			return null;
 		};
 
 		/**
@@ -1379,7 +1499,7 @@ define(["wc/has",
 		 */
 		AbstractMenu.prototype._actionItem = function(element) {
 			var root = this._getRoot(element),
-				item;
+				item, branchOrContent;
 			if (!root) {
 				return false;
 			}
@@ -1395,7 +1515,9 @@ define(["wc/has",
 				}
 			}
 			if (this._isBranch(item)) {
-				this._animateBranch(item, !shed.isExpanded(item));
+				// trees: the treeitem gets expanded, menus: the menu gets expanded.
+				branchOrContent = this._getBranchExpandableElement(item);
+				this._animateBranch(branchOrContent, !shed.isExpanded(branchOrContent));
 				if (this._oneOpen) {
 					closeAllPaths(root, item, this);
 				}
@@ -1432,33 +1554,37 @@ define(["wc/has",
 		 * @returns {Boolean} true if the branch opened.
 		 */
 		AbstractMenu.prototype._openBranch = function(branch) {
-			var result = false,
+			var _branch,
+				_expandable,
 				root;
-			// Open branch may be called from an opener button (pretty common actually)
-			branch = this._getBranch(branch);
-			if (branch && !shed.isExpanded(branch) && (root = this._getRoot(branch))) {
-				if (this._oneOpen) {
-					closeAllPaths(root, branch, this);
+
+			if ((root = this._getRoot(branch))) { // usual test for "am i in the correct menu module". TODO: Maybe make this a helper...
+				// Open branch may be called from an opener button (pretty common actually) so first we need the real branch.
+				if ((_branch = this._getBranch(branch)) && (_expandable = this._getBranchExpandableElement(_branch)) && !shed.isExpanded(_expandable)) {
+					if (this._oneOpen) {
+						closeAllPaths(root, branch, this); // use the original branch
+					}
+					return this._animateBranch(_expandable, true);
 				}
-				result = this._animateBranch(branch, true);
 			}
-			return result;
+
+			return null;
 		};
 
 		/**
-		 * Closes a branch: only works if called from a branch opener, submenu or branch
+		 * Closes a branch: only works if called from a branch opener, submenu or branch.
 		 * @function
 		 * @protected
-		 * @param {Element} branch the branch to close (or its 'opener' button or submenu child)
+		 * @param {Element} branch tThe branch to close (or its 'opener' button or submenu child).
 		 * @returns {Boolean} true if the branch closed.
 		 */
 		AbstractMenu.prototype._closeBranch = function(branch) {
-			var result = false;
+			var _expandable;
 			/* close branch may be called from an opener button or a submenu (pretty common actually) */
-			if ((branch = this._getBranch(branch)) && shed.isExpanded(branch)) {
-				result = this._animateBranch(branch, false);
+			if ((_expandable = this._getBranchExpandableElement(branch)) && shed.isExpanded(_expandable)) {
+				return this._animateBranch(_expandable, false);
 			}
-			return result;
+			return false;
 		};
 
 		/**
@@ -1493,20 +1619,19 @@ define(["wc/has",
 		 */
 		AbstractMenu.prototype._closeMyBranch = function(item) {
 			var branch,
-				result;
+				_item = item;
 			// if we simply called closeMyBranch from a 'closed' opener we would end up doing nothing because the
-			//    opener's parent branch is the branch it is in. So we need to get the branches parent
-			if (this._isBranchOrOpener(item)) {
-				if ((item = this._getBranch(item)) && !shed.isExpanded(item)) {
-					item = item.parentNode;
+			// opener's parent branch is the branch it is in. So we need to get the branches parent.
+			if (this._isBranchOrOpener(_item)) {
+				if ((branch = this._getBranch(_item)) && !shed.isExpanded(this._getBranchExpandableElement(branch))) {
+					_item = branch.parentNode;
 				}
 			}
-			if ((branch = this._getBranch(item)) && branch !== this._getRoot(item)) {
-				// do not try to close root!!
+			if ((branch = this._getBranch(_item)) && branch !== this._getRoot(_item)) { // do not try to close root!!
 				this[FUNC_MAP.CLOSE](branch);
-				result = branch;
+				return branch;
 			}
-			return result;
+			return null;
 		};
 
 		/**
@@ -1633,9 +1758,7 @@ define(["wc/has",
 				if (this[action]) {
 					return this[action](item);
 				}
-				else {
-					target = this._getTargetItem(item, action, root);
-				}
+				target = this._getTargetItem(item, action, root);
 			}
 			else if (keyName && (keyName = keyName.replace(KEY_NAME_RE, "")) && keyName.length === 1 && LETTER.test(keyName)) {
 				target = getTextTarget(item, keyName, root, this);
@@ -1725,7 +1848,7 @@ define(["wc/has",
 						this[FUNC_MAP.ACTION](target);
 						if (isMenuTransient(root, this)) {
 							if (this._isBranch(item)) {
-								activateOnHover = shed.isExpanded(item) ? root.id : null;
+								activateOnHover = shed.isExpanded(this._getBranchExpandableElement(item)) ? root.id : null;
 							}
 							else if (this._isLeaf(item)) {
 								me = this;
@@ -1739,7 +1862,7 @@ define(["wc/has",
 					closeOpenMenu(localOpenMenu, target, this);
 				}
 			}
-			catch(ex) {
+			catch (ex) {
 				$event.preventDefault();  // in case a link or submit was clicked, don't hide/lose the error
 				console.error("Uncaught exception in AbstractMenu.onClick: ", ex.message);
 			}
@@ -1784,37 +1907,52 @@ define(["wc/has",
 		AbstractMenu.prototype._setMenuItemRole = function(component, contextElement) {
 			var _role = this._role.LEAF,
 				result = _role.noSelection,
+				selectMode,
 				branch = contextElement,
 				TRANSIENT_SELECTABLE_ATTRIB = "data-wc-selectable",
 				isSelectable = component.getAttribute(TRANSIENT_SELECTABLE_ATTRIB),
-				selectModeAttrib,
 				FALSE = "false";
 
 			if (isSelectable !== FALSE && !this._isBranch(component)) {
 				if (!(this._isBranch(branch) || this.ROOT.isOneOfMe(branch))) {
 					branch = this._getBranch(contextElement) || this._getRoot(contextElement);
 				}
-
-				if (branch) {
-					selectModeAttrib = branch.getAttribute("data-wc-selectmode");
-
-					if (selectModeAttrib === "single") {
-						result = _role.single;
-					}
-					else if (selectModeAttrib || isSelectable === TRUE) {
-						result = _role.multi;
-					}
-				}
-				else if (isSelectable === TRUE) {
-					result = _role.multi;
+				selectMode = getSelectMode(branch, isSelectable, _role);
+				if (selectMode) {
+					result = selectMode;
+					component.setAttribute("aria-checked", FALSE);
 				}
 			}
 			component.setAttribute(ROLE_ATTRIB, result);
-			if (result !== _role.noSelection) {
-				component.setAttribute("aria-checked", FALSE);
-			}
 			component.removeAttribute(TRANSIENT_SELECTABLE_ATTRIB);
 		};
+
+		/**
+		 * Helper for _setMenuItemRole.
+		 * @param {Element} branch Menu branch element.
+		 * @param {string} isSelectable "true" or "false"
+		 * @param _role LEAF role
+		 * @returns {_role.multi|_role.single}
+		 * @function
+		 * @private
+		 */
+		function getSelectMode(branch, isSelectable, _role) {
+			var result, selectModeAttrib;
+			if (branch) {
+				selectModeAttrib = branch.getAttribute("data-wc-selectmode");
+
+				if (selectModeAttrib === "single") {
+					result = _role.single;
+				}
+				else if (selectModeAttrib || isSelectable === TRUE) {
+					result = _role.multi;
+				}
+			}
+			else if (isSelectable === TRUE) {
+				result = _role.multi;
+			}
+			return result;
+		}
 
 		/**
 		 * Sets the selected state of a menu descendant which was inserted via AJAX.

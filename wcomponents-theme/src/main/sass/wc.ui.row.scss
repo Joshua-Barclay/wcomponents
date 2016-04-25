@@ -1,20 +1,22 @@
-/*
-  wc.ui.row.scss
-  Rows from WRow, columns from WColumn and both from ColumnLayout.
-  box-sizing is really only required if the columns have hgap
-*/
-@import "mixins_common.scss";
-.wc_row > div {
-	@include borderBox;
-	display: inline-block;
-	vertical-align: top;
+/* wc.ui.row.scss */
+@import 'mixins_common.scss';
 
-	@include respond(phone) {
+.row {
+	@include flex($justify: space-between);
+}
+
+@include respond(phonelike) {
+	.row {
 		display: block;
-		width: 100% !important;
-		max-width: none !important;
-		padding-left: 0 !important;
-		padding-right: 0 !important;
+
+		> div {
+			// important to override inline css from XSLT
+			// scss-lint:disable ImportantRule
+			display: block;
+			max-width: none !important;
+			padding-left: 0 !important;
+			padding-right: 0 !important;
+			width: 100% !important;
+		}
 	}
 }
-/* end wc.ui.row.scss */

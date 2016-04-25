@@ -1,20 +1,29 @@
 /* wc.ui.fileUpload.ie11.scss */
-@import "mixins_common.scss";
+@import 'mixins_common.scss';
+
+.fileUpload .file {
+	padding-right: 3px; // IE11 cannot calc 100% - 1.333 em and set a right pad in em at the same time. Useless POS.
+}
+
 // The default file upload in IE is a bit ugly if anything is styled at all. This CSS may be considered lipstick. If we
 // cannot style the pseudo elements (IE9-) then it can remain ugly.
-input[type="file"] {
+//scss-lint:disable VendorPrefix
+input[type='file'] {
+	background-color: $wc-ui-color-global-bg;
 	padding: 0;
-	background-color: $wc_ui_color_globalBackground;
+
 	&::-ms-browse { // pseudo-element ::-ms-browse on its own has detrimental effects on all buttons!!
 		border: 0 none;
 	}
+
 	&::-ms-value {
+		background-color: inherit;
 		border: 0 none;
 		margin: 0;
-		background-color: inherit;
 	}
+
 	&[disabled] {
-		background-color: $wc_ui_color_disabledBackground;
+		background-color: $wc-ui-color-disabled-bg;
 	}
 }
 /* end wc.ui.fileUpload.ie11.scss */

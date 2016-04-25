@@ -3,14 +3,10 @@
 	<xsl:import href="wc.common.disabledElement.xsl"/>
 	<xsl:import href="wc.common.accessKey.xsl"/>
 	<xsl:import href="wc.constants.xsl"/>
-	<xsl:import href="wc.debug.common.contentCategory.xsl"/>
-	<xsl:import href="wc.debug.common.bestPracticeHelpers.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
 
-<!--
- The content of the tab. Wrapped in a DIV element.
--->
+	<!--
+	 The content of the tab. Wrapped in a DIV element.
+	-->
 	<xsl:template match="ui:tabContent">
 		<xsl:param name="open"/>
 		<xsl:variable name="id">
@@ -25,23 +21,22 @@
 				<xsl:text>tabpanel</xsl:text>
 			</xsl:attribute>
 			<xsl:attribute name="class">
+				<xsl:text>tabContent</xsl:text>
 				<xsl:if test="$mode='server'">
-					<xsl:text>wc_lame </xsl:text>
+					<xsl:text> wc_lame</xsl:text>
 				</xsl:if>
 				<xsl:choose>
 					<xsl:when test="$open=1">
 						<xsl:if test="$mode='dynamic'">
-							<xsl:text>wc_magic wc_dynamic</xsl:text>
+							<xsl:text> wc_magic wc_dynamic</xsl:text>
 						</xsl:if>
 					</xsl:when>
-					<xsl:otherwise>
-						<xsl:if test="($mode='lazy') or ($mode='eager') or ($mode='dynamic')">
-							<xsl:text>wc_magic</xsl:text>
-							<xsl:if test="$mode='dynamic'">
-								<xsl:text> wc_dynamic</xsl:text>
-							</xsl:if>
+					<xsl:when test="($mode='lazy') or ($mode='eager') or ($mode='dynamic')">
+						<xsl:text> wc_magic</xsl:text>
+						<xsl:if test="$mode='dynamic'">
+							<xsl:text> wc_dynamic</xsl:text>
 						</xsl:if>
-					</xsl:otherwise>
+					</xsl:when>
 				</xsl:choose>
 			</xsl:attribute>
 			<xsl:if test="$open!=1">

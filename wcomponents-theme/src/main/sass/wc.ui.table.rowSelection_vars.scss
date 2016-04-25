@@ -1,8 +1,11 @@
-@import "vars_all.scss";
+@import 'wc.ui.table_vars.scss';
+@import 'mixins_common.scss';
 
-$disabledOpacity: 0.33;
+$row-disable-opacity: 0.33;
 
-@mixin rowInvite {
-	background-color: $wc_ui_color_invite_bg;
-	background-color: $wc_ui_color_invite_bg_rgba;
+@mixin row-invite {
+	background-color: $wc-ui-color-invite-bg;
+	// make the nackground-color rgba for real browsers.
+	// scss-lint:disable DuplicateProperty
+	background-color: $wc-ui-color-invite-bg-rgba;
 }

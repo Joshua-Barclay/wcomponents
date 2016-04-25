@@ -2,17 +2,17 @@
 	<description>Common properties and macros needed for sub builds</description>
 
 	<import file="build-import-overrides.xml" optional="true"/>
-	
+
 	<!-- GLOBAL PROPERTIES: used in both input and output tasks -->
 	<property name="tmp.dir" location="${theme.tmp.dir}"/>
 	<property name="maven.project.name" value="${project.name}"/>
 	<property name="build.number" value="${project.version}"/>
+	<property name="npm.loglevel" value="warn"/>
 
 	<!-- INPUT PROPERTIES: relating to the artefacts used as inputs by this build -->
 	<property name="theme.src.dir" location="${component.rootdir}/src"/>
 	<property name="common.src.rootdir" location="${theme.src.dir}/main"/>
 	<property name="common.test.rootdir" location="${theme.src.dir}/test"/>
-	<property name="products.dir" location="${component.rootdir}/../products"/>
 	<property name="lde_config_dir" location="${component.rootdir}/lde"/>
 	<property name="impl.src.rootdir" location="${theme.impl.dir}"/>
 	<property name="impl.src.dir" location="${impl.src.rootdir}/${implementation.name}"/>
@@ -71,13 +71,6 @@
 	<property name="images.rootdir" location="${common.src.rootdir}/images"/>
 	<property name="impl.images.rootdir" location="${impl.src.main.dir}/images"/>
 
-
-	<!-- browser specific stuff -->
-	<property name="common.ext.webkit" value="webkit"/>
-	<property name="common.ext.gecko" value="ff"/>
-	<property name="common.ext.ieAll" value="ieAll"/>
-	<property name="common.ext.ie8" value="ie8"/>
-
 	<!-- ENVIRONMENT PROPERTIES -->
 	<property environment="env"/>
 	<hostinfo/>
@@ -101,19 +94,7 @@
 	<!-- TASKDEFS and MACRODEFS -->
 	<taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="project.class.path"/>
 	<taskdef resource="net/sf/antcontrib/antlib.xml" classpathref="project.class.path"/>
-	<!--
-	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
-		<classpath>
-			<pathelement location="${products.dir}/ant-contrib-1.0b3/ant-contrib-1.0b3.jar"/>
-		</classpath>
-	</taskdef>
 
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="${products.dir}/ant-contrib-1.0b3/ant-contrib-1.0b3.jar"/>
-		</classpath>
-	</taskdef>
-	-->
 	<!-- "PRIVATE" properties, for use by macros inside this file - don't play with them -->
 	<var name="private.unique.id.increment.count" value="0"/>
 
@@ -219,38 +200,6 @@
 		</sequential>
 	</macrodef>
 
-	<!--
-		For goodness sake NEVER run this on the minified js files (crashed my entire
-		machine every time I accidentally did this).
-	-->
-	<macrodef name="qualityCheck">
-		<!--
-			I tried to use JsLint4Java but it was way too slow.
-		-->
-		<attribute name="process" description="The path to the JS we want to lint. Supports wildcards."/>
-		<attribute name="define" default="" description="Optional. Newline separated list of definitions you want to add."/>
-		<sequential>
-			<buildJsLintConf process="@{process}" define="@{define}"/>
-			<condition property="jslExecutable" value="jsl">
-				<os name="Linux"/>
-			</condition>
-			<condition property="jslExecutable" value="jsl-mac">
-				<os family="mac"/>
-			</condition>
-			<condition property="jslExecutable" value="jsl.exe">
-				<os family="windows"/>
-			</condition>
-			<property name="jslExecutable" value="jsl"/>
-			<chmod file="${products.dir}/jsLint/${jslExecutable}" perm="ugo+rx"/>
-			<echo>Running: ${products.dir}/jsLint/${jslExecutable}</echo>
-			<exec spawn="false" executable="${jslExecutable}" failonerror="true"
-				dir="${products.dir}/jsLint" resolveexecutable="true">
-				<arg value="-conf"/>
-				<arg value="${jsLint.conf.file}"/>
-			</exec>
-		</sequential>
-	</macrodef>
-
 	<!-- simple dynamic excludes builder: used by build-xslt.xml and build-css.xml -->
 	<macrodef name="simpleAddPatternToExcludes">
 		<attribute name="destfile"/>
@@ -328,13 +277,14 @@
 			<echo>Setting @{nameOfLowestVersionPropToSet} to: ${ie.support.lowest.version}</echo>
 			<propertyfile file="${properties.build.constants}">
 				<entry key="@{nameOfLowestVersionPropToSet}" value="${ie.support.lowest.version}"/>
+				<entry key="ie.css.list" value="${ie.version.list}"/>
 			</propertyfile>
 		</sequential>
 	</macrodef>
+
 	<!--
 	PLUGINS
 	-->
-	
 	<property name="common.src.plugin.dir" location="${common.src.rootdir}/plugins"/>
 	<property name="impl.src.plugin.dir" location="${impl.src.main.dir}/plugins"/>
 	<condition property="plugin.includesfile" value="${impl.src.dir}/plugins.include.txt" else="${component.rootdir}/plugins.include.txt">
@@ -387,10 +337,7 @@
 }
 </echo>
 			<echo file="${jshintignore}" force="true"># Only ignore third-party scripts
-**/dojo/**
-**/sprintf/**
-**/requirejs/**
-**/hasjs/**
+**/lib/**
 </echo>
 			<echo>
 				If the build fails here it means static analysis has detected Javascript issues.
@@ -413,14 +360,14 @@
 			</nodejs.exec>
 		</sequential>
 	</macrodef>
-	
+
 <!--	<macrodef name="loadJsDebugMap">
 		<attribute name="propertyToSet"/>
 		<sequential>
 			<loadfile property="@{propertyToSet}" srcFile="${tmp.dir}/config/map.txt"/>
 		</sequential>
 	</macrodef>-->
-	
+
 	<!--
 		Does what "npm install" does.
 	-->
@@ -429,10 +376,7 @@
 		<attribute name="cwd" default="${basedir}" description="The working directory"/>
 		<attribute name="failonerror" default="false"/>
 		<sequential>
-			<local name="package.dir"/>
 			<local name="npm.command"/>
-			<property name="package.dir" location="${basedir}/node_modules/@{package}"/>
-<!--			<available property="npm.command" file="${package.dir}" type="dir" value="update"/>-->
 			<property name="npm.command" value="install"/>
 			<echo>npm ${npm.command} @{package}</echo>
 			<npm.exec cwd="@{cwd}">
@@ -468,12 +412,13 @@
 				<arguments>
 					<arg value="${npmjs.dir}/npm-cli.js"/>
 					<arg-elements />
-					<arg value="--verbose"/>
+					<arg value="--loglevel"/>
+					<arg value="${npm.loglevel}"/>
 				</arguments>
 			</nodejs.exec>
 		</sequential>
 	</macrodef>
-	
+
 	<!--
 	This macro knows how to call the nodejs executable on different platforms.
 	It is primarily a helper for other macros in this library.
@@ -502,11 +447,10 @@
 			<if>
 				<os family="windows"/>
 				<then>
-					<exec dir="@{cwd}" executable="cmd" failonerror="@{failonerror}" spawn="@{spawn}">
+					<exec dir="@{cwd}" executable="${nodejs.dir.location}/node" failonerror="@{failonerror}" spawn="@{spawn}">
 						<env key="Path" path="${npmjs.dir};${nodejs.dir.location};${env.Path}"/>
 						<env key="NVM_NODEJS_ORG_MIRROR" value="${node.download.root}"/><!-- TODO externalize. This is to get SASS to build. -->
 						<env key="SASS_BINARY_SITE" value="${node.sass.download.root}"/><!-- TODO externalize. This is to get SASS to build. -->
-						<arg line="/c &quot;${nodejs.dir.location}\node&quot;"/>
 						<arguments />
 					</exec>
 				</then>
@@ -521,7 +465,7 @@
 			</if>
 		</sequential>
 	</macrodef>
-	
+
 	<!--
 		General purpose way to invoke an executable.
 	-->
@@ -552,7 +496,7 @@
 							</exec>
 						</else>
 					</if>
-					
+
 				</then>
 				<else>
 					<exec unless:set="onwin" dir="@{cwd}" executable="@{executable}" failonerror="@{failonerror}" spawn="@{spawn}">
@@ -563,9 +507,9 @@
 			</if>
 		</sequential>
 	</macrodef>
-	
+
 	<!--
-	
+
 	This macro performs a transform from XML to JSON using xsltjson: https://github.com/bramstein/xsltjson.
 
 	EXAMPLE:
@@ -586,7 +530,7 @@
 		<attribute name="useRabbitfish" default="false"/>
 		<attribute name="useRayfish" default="false"/>
 		<attribute name="extension" default=".xml"/>
-		
+
 		<sequential>
 			<unzip dest="@{destDir}">
 				<patternset>

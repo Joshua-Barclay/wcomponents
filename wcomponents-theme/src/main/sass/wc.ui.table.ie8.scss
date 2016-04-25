@@ -1,15 +1,16 @@
-/*wc.ui.table.ie8.scss*/
-@import "vars_all.scss";
+/* wc.ui.table.ie8.scss */
+@import 'vars_all.scss';
 
+// tr required to differentiate from col
+// scss-lint:disable QualifyingElement
 tr.wc_table_stripe {
-	background-color: $wc_ui_color_highlight_bg;
-	color: $wc_ui_color_highlight_fg;
+	background-color: $wc-ui-color-highlight-bg;
+	color: $wc-ui-color-highlight-fg;
 }
 
 .wc_table_rowexp_container,
 .wc_table_sel_wrapper {
-	max-width: $lineSize;
-	width: $lineSize;
+	max-width: $line-size;
+	width: $line-size;
 }
-
-/*end wc.ui.table.ie8.scss*/
+/* end wc.ui.table.ie8.scss */

@@ -5,11 +5,8 @@
 	<xsl:import href="wc.common.disabledElement.xsl"/>
 	<xsl:import href="wc.common.hide.xsl"/>
 	<xsl:import href="wc.common.accessKey.xsl"/>
-	<xsl:import href="wc.debug.common.contentCategory.xsl"/>
 	<xsl:import href="wc.common.ajax.xsl"/>
-
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 	<!--
 		WMenuItem forms part of a single compound widget with the WMenu at its root.
 
@@ -33,7 +30,7 @@
 			</xsl:if>
 		</xsl:variable>
 
-		<xsl:variable name="type">
+		<xsl:variable name="actionType">
 			<xsl:choose>
 				<xsl:when test="@url">
 					<xsl:number value="1"/>
@@ -49,7 +46,7 @@
 
 		<xsl:variable name="menuItemElement">
 			<xsl:choose>
-				<xsl:when test="$type=0">
+				<xsl:when test="$actionType=0">
 					<xsl:text>div</xsl:text>
 				</xsl:when>
 				<xsl:otherwise>
@@ -58,21 +55,9 @@
 			</xsl:choose>
 		</xsl:variable>
 
-		<xsl:variable name="class">
-			<xsl:if test="$type &gt; 0">
-				<xsl:text>wc_btn_nada</xsl:text>
-				<xsl:if test="@cancel">
-					<xsl:text> wc_btn_cancel</xsl:text>
-				</xsl:if>
-				<xsl:if test="@unsavedChanges">
-					<xsl:text> wc_unsaved</xsl:text>
-				</xsl:if>
-			</xsl:if>
-		</xsl:variable>
-
 		<xsl:variable name="isButton">
 			<xsl:choose>
-				<xsl:when test="$type=0">
+				<xsl:when test="$actionType=0">
 					<xsl:number value="0"/>
 				</xsl:when>
 				<xsl:otherwise>
@@ -85,18 +70,25 @@
 			<xsl:attribute name="id">
 				<xsl:value-of select="$id"/>
 			</xsl:attribute>
-			<xsl:if test="$class!=''">
-				<xsl:attribute name="class">
-					<xsl:value-of select="normalize-space($class)"/>
-				</xsl:attribute>
-			</xsl:if>
+			<xsl:attribute name="class">
+				<xsl:call-template name="commonClassHelper"/>
+				<xsl:if test="$actionType &gt; 0">
+					<xsl:text> wc_btn_nada</xsl:text>
+					<xsl:if test="@cancel">
+						<xsl:text> wc_btn_cancel</xsl:text>
+					</xsl:if>
+					<xsl:if test="@unsavedChanges">
+						<xsl:text> wc_unsaved</xsl:text>
+					</xsl:if>
+				</xsl:if>
+			</xsl:attribute>
 			<xsl:if test="@toolTip">
 				<xsl:attribute name="title">
 					<xsl:value-of select="normalize-space(@toolTip)"/>
 				</xsl:attribute>
 			</xsl:if>
 			<xsl:choose>
-				<xsl:when test="$type=1">
+				<xsl:when test="$actionType=1">
 					<xsl:attribute name="type">
 						<xsl:text>button</xsl:text>
 					</xsl:attribute>
@@ -112,7 +104,7 @@
 						</xsl:attribute>
 					</xsl:if>
 				</xsl:when>
-				<xsl:when test="$type=2">
+				<xsl:when test="$actionType=2">
 					<xsl:attribute name="type">
 						<xsl:text>submit</xsl:text>
 					</xsl:attribute>
@@ -240,14 +232,6 @@
 							</xsl:if>
 						</xsl:otherwise>
 					</xsl:choose>
-
-					<xsl:if test="$isDebug=1">
-						<xsl:call-template name="debugAttributes"/>
-						<xsl:call-template name="nesting-debug">
-							<xsl:with-param name="testNonPhrase" select="$isButton"/>
-							<xsl:with-param name="testInteractive" select="$isButton"/>
-						</xsl:call-template>
-					</xsl:if>
 					<!--
 					 If the menuItem is not in a submenu then the accesskey attribute will be set
 					 if required and a balloon help tooltip element is created. If there is no context

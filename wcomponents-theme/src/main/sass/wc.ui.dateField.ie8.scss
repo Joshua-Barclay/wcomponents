@@ -1,16 +1,19 @@
-/*wc.ui.dateField.ie8.scss */
-@import "mixins_common.scss";
+/* wc.ui.dateField.ie8.scss */
+@import 'mixins_common.scss';
 
-#wc-calendar{
+// The calendar container is a single generated element with a fixed id.
+// scss-lint:disable IdSelector
+#wc-calendar {
 	thead {
 		td {
-			vertical-align:bottom;
-			padding:0;
+			padding: 0;
+			vertical-align: bottom;
 		}
-		input, button[value="-1"] {
-			margin-left: $hgap_large;
+
+		input,
+		[value='-1'] {
+			margin-left: $hgap-large;
 		}
 	}
 }
-
-/* end wc.ui.dateField.ie8.css */
+/* end wc.ui.dateField.ie8.scss */

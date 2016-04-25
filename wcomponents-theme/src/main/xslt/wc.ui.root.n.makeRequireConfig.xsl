@@ -1,6 +1,8 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ui="https://github.com/bordertech/wcomponents/namespace/ui/v1.0" xmlns:html="http://www.w3.org/1999/xhtml" version="1.0">
 	<xsl:import href="wc.constants.xsl"/>
 	<xsl:import href="wc.ui.root.variables.xsl"/>
+	<xsl:import href="wc.ui.root.n.styleLoaderConfig.xsl"/>
+	<xsl:import href="wc.ui.root.n.localConfig.xsl"/>
 	<!--
 		Constructs the require config which is necessary to commence inclusion
 		and bootstrapping of WComponent JavaScript. This must be included before
@@ -22,9 +24,12 @@
 	var wcconfig, timing,
 		config = {
 					paths: {
-						tinyMCE: "tinymce/tinymce.min",
-						Promise: "promise/Promise.min",
-						axs: "a11y/axs_testing"
+						tinyMCE: "lib/tinymce/tinymce.min",
+						Promise: "lib/Promise.min",
+						fabric: "lib/fabric",
+						Mustache: "lib/mustache/mustache.min",
+						axs: "lib/axs_testing",
+						axe: "lib/axe.min"
 					},
 					shim: {
 						tinyMCE: {
@@ -37,8 +42,14 @@
 						Promise: {
 							exports: "Promise"
 						},
+						fabric: {
+							exports: "fabric"
+						},
 						axs: {
 							exports: "axs"
+						},
+						axe: {
+							exports: "axe"
 						}
 					},
 					deps:[],&#10;
@@ -46,11 +57,10 @@
 			<xsl:value-of select="concat('baseUrl:&quot;', normalize-space($resourceRoot), $scriptDir, '/&quot;,&#10;')"/>
 			<xsl:value-of select="concat('urlArgs:&quot;', $cacheBuster, '&quot;&#10;')"/>
 			<xsl:text>};&#10;wcconfig = {"wc/xml/xslTransform": {</xsl:text>
-			<xsl:value-of select="concat('xslEngine:&quot;', $xslVendor, '&quot;,&#10;')"/>
+			<xsl:value-of select="concat('xslEngine:&quot;', system-property('xsl:vendor'), '&quot;,&#10;')"/>
 			<!-- Used for testing purposes -->
 			<xsl:value-of select="concat('xslUrl:&quot;', normalize-space($xslPath), '&quot;')"/>
 			<xsl:text>},&#10;"wc/i18n/i18n": {</xsl:text>
-			<xsl:value-of select="concat('i18nBundleUrl:&quot;', normalize-space($xslPath), '&quot;,')"/>
 			<xsl:value-of select="concat('locale:&quot;', normalize-space($locale), '&quot;')"/>
 			<xsl:text>},&#10;"wc/loader/resource": {</xsl:text>
 			<xsl:value-of select="concat('xmlBaseUrl:&quot;', normalize-space($resourceRoot), '${xml.target.dir.name}/&quot;,&#10;')"/>
@@ -61,9 +71,10 @@
 			<xsl:if test="$isDebug=1">
 				<xsl:text>,debug:1</xsl:text>
 			</xsl:if>
-			<!-- Add style loader config here if needed -->
 			<xsl:call-template name="styleLoaderConfig"/>
-			<xsl:text>}};&#10;</xsl:text>
+			<xsl:text>}</xsl:text>
+			<xsl:call-template name="localConfig" />
+			<xsl:text>};&#10;</xsl:text>
 			<!--
 				The timings must be collected as early as possible in the page lifecycle
 				and since this is the very first script that runs we need to put it here.

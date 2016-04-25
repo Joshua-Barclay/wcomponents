@@ -51,13 +51,11 @@ define(["wc/has", "wc/dom/cookie"],
 							cookie.create(key, value);
 						}
 					}
+					else if (hasLocalStorage) {
+						window.localStorage[key] = value;
+					}
 					else {
-						if (hasLocalStorage) {
-							window.localStorage[key] = value;
-						}
-						else {
-							cookie.create(key, value, 365);
-						}
+						cookie.create(key, value, 365);
 					}
 				}
 			};
@@ -81,13 +79,11 @@ define(["wc/has", "wc/dom/cookie"],
 							result = cookie.read(key);
 						}
 					}
+					else if (hasLocalStorage) {
+						result = window.localStorage[key];
+					}
 					else {
-						if (hasLocalStorage) {
-							result = window.localStorage[key];
-						}
-						else {
-							result = cookie.read(key);
-						}
+						result = cookie.read(key);
 					}
 				}
 				return result;
@@ -123,7 +119,7 @@ define(["wc/has", "wc/dom/cookie"],
 							try {
 								delete window.sessionStorage[key];
 							}
-							catch(ex) {
+							catch (ex) {
 								// IE8
 								if (typeof window.sessionStorage[key] !== "undefined") {
 									window.sessionStorage[key] = "";
@@ -140,7 +136,7 @@ define(["wc/has", "wc/dom/cookie"],
 							try {
 								delete window.localStorage[key];
 							}
-							catch(ex) {
+							catch (ex) {
 								// IE8
 								if (typeof window.localStorage[key] !== "undefined") {
 									window.localStorage[key] = "";

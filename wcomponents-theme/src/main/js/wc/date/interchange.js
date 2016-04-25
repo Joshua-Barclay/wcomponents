@@ -17,11 +17,11 @@
  *
  * @module
  * @requires module:wc/date/today
- * @requires external:sprintf/sprintf
+ * @requires external:lib/sprintf
  * @todo port all of our date utils to work with xfer date strings unless they exclusively work with full dates only.
  */
-define(["wc/date/today", "sprintf/sprintf"],
-	/** @param $today wc/date/today @param sprintf sprintf/sprintf @ignore */
+define(["wc/date/today", "lib/sprintf"],
+	/** @param $today wc/date/today @param sprintf lib/sprintf @ignore */
 	function($today, sprintf) {
 		"use strict";
 
@@ -52,11 +52,20 @@ define(["wc/date/today", "sprintf/sprintf"],
 			 */
 			function splitXferDate(xfr, defaults) {
 				var result, day, month, year, today = $today.get(),  // the use of wc/date/today is to make this unit testable on boundary dates
-					parsed = xfr.match(XFER_DATE_RE);
+					parsed = xfr.match(XFER_DATE_RE),
+					defaultValues = {
+						1: today.getFullYear(),
+						2: 1,
+						3: 1
+					},
+					getVal = function (idx) {
+						return (parsed[idx].indexOf(PLACEHOLDER) < 0) ? parsed[idx] : (defaults ? defaultValues[idx] : null);
+					};
+
 				if (parsed) {
-					year = (parsed[1].indexOf(PLACEHOLDER) < 0) ? parsed[1] : (defaults ? today.getFullYear() : null);
-					month = (parsed[2].indexOf(PLACEHOLDER) < 0) ? parsed[2] : (defaults ? 1 : null);
-					day = (parsed[3].indexOf(PLACEHOLDER) < 0) ? parsed[3] : (defaults ? 1 : null);
+					year = getVal(1);
+					month = getVal(2);
+					day = getVal(3);
 					result = [year, month, day];
 				}
 				return result;
@@ -136,7 +145,6 @@ define(["wc/date/today", "sprintf/sprintf"],
 			 * @param {module:wc/date/interchange~dateFromValuesObject} obj The object containing values to be
 			 *    converted to a transfer format date.
 			 * @returns {String} The given object's values converted to a transfer date string.
-			 * @todo Allow for year 0 (though we do not condone Pol Pot).
 			 */
 			this.fromValues = function(obj) {
 				var y = obj.year || yPlaceholder,  // there is no year zero

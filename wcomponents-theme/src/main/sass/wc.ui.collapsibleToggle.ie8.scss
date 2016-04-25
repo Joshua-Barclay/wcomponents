@@ -1,7 +1,8 @@
 /* wc.ui.collapsibleToggle.ie8.scss */
-@import "mixins_common.scss";
+@import 'mixins_common.scss';
 
-.expandCollapseAll:before{
-	@include useSymbolFont;
+.expandCollapseAll:before {
+	@include use-symbol-font;
+	font-size: 16px;
 }
 /* end wc.ui.collapsibleToggle.ie8.scss */

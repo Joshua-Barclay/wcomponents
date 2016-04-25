@@ -2,8 +2,8 @@
 	<xsl:import href="wc.constants.xsl" />
 	<xsl:import href="wc.common.ajax.xsl" />
 	<xsl:import href="wc.common.hide.xsl" />
-	<xsl:import href="wc.debug.debugInfo.xsl" />
 	<xsl:import href="wc.ui.field.n.isCheckRadio.xsl" />
+	<xsl:import href="wc.common.n.className.xsl"/>
 
 	<!--
 		Transform for WField. It is used to represent a label:control pair. WField is a
@@ -48,13 +48,12 @@
 			<xsl:variable name="isCheckRadio">
 				<xsl:call-template name="fieldIsCheckRadio" />
 			</xsl:variable>
-			<li id="{@id}" class="{local-name()}">
+			<li id="{@id}">
 				<xsl:attribute name="id">
 					<xsl:value-of select="@id" />
 				</xsl:attribute>
-				<xsl:attribute name="class">
-					<xsl:text>field</xsl:text>
-				</xsl:attribute>
+
+				<xsl:call-template name="makeCommonClass"/>
 				<!--
 					If we are part of an ajaxResponse and we don't have a parent ui:fieldLayout we
 					need to add a transient attribute to act as a flag for the ajax subscriber
@@ -66,9 +65,6 @@
 				</xsl:if>
 				<xsl:call-template name="hideElementIfHiddenSet" />
 				<xsl:call-template name="ajaxTarget" />
-				<xsl:if test="$isDebug=1">
-					<xsl:call-template name="debugAttributes" />
-				</xsl:if>
 				<xsl:if test=" not($layout = 'stacked') and ($isCheckRadio=1 or not(ui:label))">
 					<span class="wc_fld_pl">
 						<xsl:if test="$labelWidth!=''">
