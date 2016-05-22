@@ -9,8 +9,8 @@
 	<xsl:import href="wc.common.missingLabel.xsl"/>
 	<xsl:import href="wc.common.required.xsl"/>
 	<xsl:import href="wc.common.title.xsl"/>
-	<xsl:import href="wc.debug.common.contentCategory.xsl"/>
 	<xsl:import href="wc.common.aria.label.xsl"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 
 	<!--
 		TODO: these need a good clean up.
@@ -59,11 +59,14 @@
 		<xsl:if test="$isError and $isError !=''">
 			<xsl:call-template name="invalid"/>
 		</xsl:if>
-		<xsl:if test="@submitOnChange and not(@list)">
-			<xsl:attribute name="class">
-				<xsl:text>wc_soc</xsl:text>
-			</xsl:attribute>
-		</xsl:if>
+
+		<xsl:attribute name="class">
+			<xsl:call-template name="commonClassHelper"/>
+			<xsl:if test="@submitOnChange and not(@list)">
+				<xsl:text> wc_soc</xsl:text>
+			</xsl:if>
+		</xsl:attribute>
+
 		<xsl:call-template name="requiredElement"/>
 		<xsl:call-template name="ajaxController">
 			<xsl:with-param name="id">
@@ -117,10 +120,10 @@
 			<xsl:with-param name="isWrapper" select="1"/>
 		</xsl:call-template>
 		<xsl:attribute name="class">
-			<xsl:value-of select="local-name()"/>
+			<xsl:call-template name="commonClassHelper"/>
 			<xsl:if test="not(@readOnly)">
 				<xsl:text> notext noborder</xsl:text>
-				<xsl:if test="@required and not(self::ui:radioButtonSelect)">
+				<xsl:if test="@required">
 					<xsl:text> wc_req</xsl:text>
 				</xsl:if>
 			</xsl:if>
@@ -166,24 +169,6 @@
 			<xsl:call-template name="disabledElement">
 				<xsl:with-param name="isControl" select="$isControl"/>
 			</xsl:call-template>
-		</xsl:if>
-		<xsl:if test="$isDebug=1">
-			<xsl:call-template name="debugAttributes">
-				<xsl:with-param name="id" select="$id"/>
-			</xsl:call-template>
-			<xsl:choose>
-				<xsl:when test="not($readOnly=$t)">
-					<xsl:call-template name="thisIsNotAllowedHere-debug">
-						<xsl:with-param name="testForNoInteractive" select="$isControl"/>
-						<xsl:with-param name="testForPhraseOnly" select="$isWrapper"/>
-					</xsl:call-template>
-				</xsl:when>
-				<xsl:when test="$isWrapper=1">
-					<xsl:call-template name="thisIsNotAllowedHere-debug">
-						<xsl:with-param name="testForPhraseOnly" select="1"/>
-					</xsl:call-template>
-				</xsl:when>
-			</xsl:choose>
 		</xsl:if>
 	</xsl:template>
 </xsl:stylesheet>

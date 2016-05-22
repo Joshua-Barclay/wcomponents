@@ -1,15 +1,13 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ui="https://github.com/bordertech/wcomponents/namespace/ui/v1.0" xmlns:html="http://www.w3.org/1999/xhtml" version="1.0">
+	<xsl:import href="wc.common.accessKey.xsl"/>
 	<xsl:import href="wc.common.ajax.xsl"/>
 	<xsl:import href="wc.common.disabledElement.xsl"/>
-	<xsl:import href="wc.common.accessKey.xsl"/>
+	<xsl:import href="wc.common.title.xsl"/>
 	<xsl:import href="wc.constants.xsl"/>
-	<xsl:import href="wc.debug.common.contentCategory.xsl"/>
-	<xsl:import href="wc.debug.common.bestPracticeHelpers.xsl"/>
 	<xsl:import href="wc.ui.tab.n.hideTab.xsl"/>
-	<xsl:import href="wc.ui.tab.n.tabElement.xsl"/>
 	<xsl:import href="wc.ui.tab.n.tabClass.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
+	<xsl:import href="wc.ui.tab.n.tabElement.xsl"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 	<!--
 		Tranform for WTab. Outputs the tab opener (the tab bit of the tab). If the
 		type is accordion also outputs the content.
@@ -59,8 +57,10 @@
 				<xsl:text>tab</xsl:text>
 			</xsl:attribute>
 			<xsl:attribute name="class">
-				<xsl:text>wc_btn_nada</xsl:text>
+				<xsl:call-template name="commonClassHelper"/>
+				<xsl:text> wc_btn_nada</xsl:text>
 			</xsl:attribute>
+			<xsl:call-template name="title"/>
 			<xsl:attribute name="{$expandSelectAttrib}">
 				<xsl:choose>
 					<xsl:when test="$isOpen=1">
@@ -74,30 +74,6 @@
 			<xsl:attribute name="aria-controls">
 				<xsl:value-of select="ui:tabContent/@id"/>
 			</xsl:attribute>
-			<xsl:if test="$isDebug=1">
-				<xsl:call-template name="debugAttributes"/>
-				<xsl:if test="@mode='server'">
-					<xsl:call-template name="lameMode"/>
-				</xsl:if>
-				<xsl:call-template name="nesting-debug">
-					<xsl:with-param name="testInteractive">
-						<xsl:choose>
-							<xsl:when test="$tabElement='button'">
-								<xsl:number value="1"/>
-							</xsl:when>
-							<xsl:otherwise>
-								<xsl:number value="0"/>
-							</xsl:otherwise>
-						</xsl:choose>
-					</xsl:with-param>
-					<xsl:with-param name="el" select="ui:decoratedLabel"/>
-				</xsl:call-template>
-				<xsl:if test="$isOpen!=1">
-					<xsl:call-template name="hasMysteryMeat">
-						<xsl:with-param name="contentElement" select="ui:tabContent"/>
-					</xsl:call-template>
-				</xsl:if>
-			</xsl:if>
 			<xsl:if test="$tabElement='button'">
 				<xsl:attribute name="type">
 					<xsl:text>button</xsl:text>
@@ -140,20 +116,6 @@
 			<!-- do not allow the open tab to be hidden (remember firstOpenTab could be empty so use not()) -->
 			<xsl:if test="not($firstOpenTab=.)">
 				<xsl:call-template name="hideTab"/>
-			</xsl:if>
-			<xsl:variable name="class">
-				<!--
-					helper template for putting a class on to a tab. Just to make
-					implementation overrides easier. Aren't we nice?
-				-->
-				<xsl:call-template name="tabClass">
-					<xsl:with-param name="firstOpenTab" select="$firstOpenTab"/>
-				</xsl:call-template>
-			</xsl:variable>
-			<xsl:if test="$class!=''">
-				<xsl:attribute name="class">
-					<xsl:value-of select="normalize-space($class)"/>
-				</xsl:attribute>
 			</xsl:if>
 			<xsl:call-template name="accessKey"/>
 			<xsl:variable name="labelElement">

@@ -1,14 +1,12 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ui="https://github.com/bordertech/wcomponents/namespace/ui/v1.0" xmlns:html="http://www.w3.org/1999/xhtml" version="1.0">
-	<xsl:import href="wc.debug.submenu.xsl"/>
 	<xsl:import href="wc.ui.menu.n.hasStickyOpen.xsl"/>
 	<xsl:import href="wc.ui.menu.n.menuRoleIsSelectable.xsl"/>
 	<xsl:import href="wc.ui.menu.n.menuTabIndexHelper.xsl"/>
 	<xsl:import href="wc.common.disabledElement.xsl"/>
 	<xsl:import href="wc.common.accessKey.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
-		<!--
-			WSubMenu is a descendant of WMenu and is used to hold WMenuItems.
+	<xsl:import href="wc.common.n.className.xsl"/>
+	<!--
+		WSubMenu is a descendant of WMenu and is used to hold WMenuItems.
 
 		HTML output
 
@@ -84,26 +82,25 @@
 				This <<may>> change so you should try not to rely on this class for too much and
 				certainly avoid it for automated testing.
 			-->
-			<xsl:attribute name="class">
-				<xsl:text>submenu</xsl:text>
-			</xsl:attribute>
-			<xsl:attribute name="aria-expanded">
-				<xsl:choose>
-					<xsl:when test="$open=1">
-						<xsl:copy-of select="$t"/>
-					</xsl:when>
-					<xsl:otherwise>
-						<xsl:text>false</xsl:text>
-					</xsl:otherwise>
-				</xsl:choose>
-			</xsl:attribute>
+			<xsl:call-template name="makeCommonClass"/>
+			<xsl:if test="$type='tree'">
+				<xsl:attribute name="aria-expanded">
+					<xsl:choose>
+						<xsl:when test="$open=1">
+							<xsl:copy-of select="$t"/>
+						</xsl:when>
+						<xsl:otherwise>
+							<xsl:text>false</xsl:text>
+						</xsl:otherwise>
+					</xsl:choose>
+				</xsl:attribute>
+			</xsl:if>
 			<xsl:if test="@selectMode and not($type='tree')">
 				<xsl:attribute name="data-wc-selectmode">
 					<xsl:value-of select="@selectMode"/>
 				</xsl:attribute>
 			</xsl:if>
 			<xsl:call-template name="hideElementIfHiddenSet"/>
-
 			<xsl:attribute name="role">
 				<xsl:choose>
 					<xsl:when test="$type='tree'"><!-- this will only be met if we can get to the ancestor menu -->
@@ -141,12 +138,6 @@
 			<xsl:if test="$disabledAncestor">
 				<xsl:call-template name="disabledElement">
 					<xsl:with-param name="field" select="$disabledAncestor"/>
-				</xsl:call-template>
-			</xsl:if>
-
-			<xsl:if test="$isDebug=1">
-				<xsl:call-template name="submenu-debug">
-					<xsl:with-param name="stickyOpen" select="$stickyOpen"/>
 				</xsl:call-template>
 			</xsl:if>
 			<!-- This is the submenu opener/label element. -->
@@ -213,6 +204,7 @@
 			</xsl:element>
 			<xsl:apply-templates select="ui:content" mode="submenu">
 				<xsl:with-param name="open" select="$open"/>
+				<xsl:with-param name="type" select="$type"/>
 			</xsl:apply-templates>
 		</xsl:element>
 	</xsl:template>

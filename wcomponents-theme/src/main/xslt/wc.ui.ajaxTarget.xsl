@@ -4,10 +4,7 @@
 	version="1.0">
 
 	<xsl:import href="wc.common.registrationScripts.xsl"/>
-
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
-<!--
+	<!--
 		ui:ajaxTarget is a child of ui:ajaxResponse (wc.ui.ajaxResponse.xsl).
 
 		The main point of this template is a simple pass-through to output the contained
@@ -16,8 +13,13 @@
 		to wire up new onload functionality.
 	-->
 	<xsl:template match="ui:ajaxTarget">
-		<xsl:apply-templates />
-		<xsl:call-template name="registrationScripts" />
+		<xsl:element name="div">
+			<xsl:attribute name="class">wc-ajaxtarget</xsl:attribute>
+			<xsl:attribute name="data-id"><xsl:value-of select="@id"/></xsl:attribute>
+			<xsl:attribute name="data-action"><xsl:value-of select="@action"/></xsl:attribute>
+			<xsl:apply-templates />
+			<xsl:call-template name="registrationScripts" />
+		</xsl:element>
 	</xsl:template>
 
 	<!--

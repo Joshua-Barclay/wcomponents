@@ -15,6 +15,7 @@
 
 		[role='tab'] {
 			@include wc-ui-tabset-top-border-radius;
+			overflow: hidden;
 
 			&[aria-selected='true'] {
 				border-bottom: 0 none;
@@ -115,11 +116,9 @@
 
 .tabset > [role='presentation'] {
 	@include border;
-	border-top: 0 none;
 }
 
 [role='tabpanel'] {
-	@include border($pos: top);
 	padding: $hgap-normal;
 
 	&[aria-busy='true'] {

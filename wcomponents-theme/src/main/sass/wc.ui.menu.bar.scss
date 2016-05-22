@@ -8,29 +8,44 @@
 		display: inline-block;
 
 		> [role],
-		> [aria-expanded] > button { //top level items
+		> .submenu > button { //top level items
 			padding: $wc-ui-menu-flyout-top-level-item-pad;
+		}
+
+		> [role='separator'][aria-orientation='vertical'] {
+			padding: $wc-ui-menu-flyout-vseparator-pad;
 		}
 	}
 
 	&.bar {
 		> [role],
-		> [aria-expanded] > button {//top level items
+		> .submenu > button {//top level items
 			padding: $wc-ui-menu-bar-column-item-pad;
 		}
+
+		> [role='separator'][aria-orientation='vertical'] {
+			padding: $wc-ui-menu-bar-vseparator-pad;
+		}
+
 	}
 
 	> [role],
 	> [role] > .decoratedLabel,
-	> [aria-expanded] > button > .decoratedLabel {
+	> .submenu > button > .decoratedLabel {
 		display: inline-block;
 		white-space: nowrap;
 		width: auto;
 	}
 
 	> [role] > .decoratedLabel,
-	> [aria-expanded] > button > .decoratedLabel {
+	> .submenu > button > .decoratedLabel {
 		vertical-align: middle;
+	}
+
+	> [role='separator'][aria-orientation='vertical'] {
+		@include border($pos: left);
+		border-bottom: 0 none;
+		display: inline;
 	}
 
 	[role='menu'] { //sub-menus of a menu bar see wc.ui.menu.barColumn.scss for more
@@ -53,45 +68,27 @@
 		[role='menu'].wc_coleast.wc_colwest { //nested submenus which collide both east and west - this is a design flaw and I refuse to cater for it!
 			max-width: none;
 		}
+	}
+}
 
-		// Structuring the WDecoratedLabels to make everything fit nice is easy at the top level but needs to override
-		// the menu defaults in wc.ui.menu.barColumn.scss
-		> [role],
-		> [aria-expanded] > button {
-			// Could be cumbersome and error-prone to unpick this selector depth
-			// scss-lint:disable SelectorDepth
-			> .decoratedLabel {
-				display: inline-block;
-				width: auto;
+@import 'wc.ui.panel_vars.scss'; // for the header foreground color
 
-				// Could be cumbersome and error-prone to unpick this nesting depth
-				// scss-lint:disable NestingDepth
-				> .wc_dlbl_seg {
-					display: inline-block;
-					padding-left: 0;
-				}
+@include respond(mobile) {
+	[role='banner'] [role='menubar'] {
+		display: inline-block;
 
-				> .labelBody {
-					width: auto;
-				}
-				// scss-lint:enable NestingDepth
+		> [role='menuitem']:first-child > button {
+			padding: $hgap-small;
+
+			&::before {
+				@include make-box;
+				content: url('../images/menu.svg');
+				vertical-align: middle;
 			}
 
-			th & { // reduce padding in a table header
-				padding: 0;
-			}
-			// scss-lint:enable SelectorDepth
-		}
-
-		[role='separator'][aria-orientation='vertical'] {// Separators.
-			// Padding is important to override the general zero padding which is important to override all the role paddings.
-			// scss-lint:disable ImportantRule
-			padding: $wc-ui-menu-item-pad-topbottom 0 !important;
-
-			th & {
-				padding: 0 !important;
+			&::after {
+				color: $wc-ui-color-panel-header-foreground;
 			}
 		}
 	}
 }
-/* end wc.ui.menu.bar.scss */

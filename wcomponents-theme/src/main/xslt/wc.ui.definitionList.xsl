@@ -1,9 +1,7 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ui="https://github.com/bordertech/wcomponents/namespace/ui/v1.0" xmlns:html="http://www.w3.org/1999/xhtml" version="1.0">
 	<xsl:import href="wc.common.ajax.xsl"/>
 	<xsl:import href="wc.constants.xsl"/>
-	<xsl:import href="wc.debug.debugInfo.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 	<!--
 		Transform for WDefinitionList. This is a pretty straightforwards implementation
 		of a HTML definition list.
@@ -17,18 +15,17 @@
 			<xsl:attribute name="id">
 				<xsl:value-of select="@id"/>
 			</xsl:attribute>
-			<xsl:if test="@type">
-				<xsl:attribute name="class">
-					<xsl:value-of select="@type"/>
-				</xsl:attribute>
-			</xsl:if>
+			<xsl:attribute name="class">
+				<xsl:call-template name="commonClassHelper"/>
+				<xsl:if test="@type">
+					<xsl:value-of select="concat(' ', @type)"/>
+				</xsl:if>
+			</xsl:attribute>
+			
 			<xsl:apply-templates select="ui:margin"/>
 			<xsl:call-template name="ajaxTarget">
 				<xsl:with-param name="live" select="'off'"/>
 			</xsl:call-template>
-			<xsl:if test="$isDebug=1">
-				<xsl:call-template name="debugAttributes"/>
-			</xsl:if>
 			<xsl:apply-templates select="ui:term"/>
 		</xsl:element>
 	</xsl:template>

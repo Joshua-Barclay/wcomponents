@@ -4,12 +4,9 @@
 	<xsl:import href="wc.common.inlineError.xsl"/>
 	<xsl:import href="wc.common.readOnly.xsl"/>
 	<xsl:import href="wc.common.title.xsl"/>
-	<xsl:import href="wc.debug.debugInfo.xsl"/>
 	<xsl:import href="wc.ui.multiTextField.n.multiTextFieldContentRenderer.xsl"/>
 	<xsl:import href="wc.ui.multiDropdown.n.multiDropDownContentRenderer.xsl"/>
 	<xsl:import href="wc.common.makeLegend.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
 <!--
 	Transforms for WMultiDropdown and WMultiTextField.
 
@@ -25,6 +22,7 @@
 		</xsl:variable>
 		<xsl:variable name="id" select="@id"/>
 		<xsl:variable name="myLabel" select="key('labelKey',$id)[1]"/>
+		
 		<xsl:choose>
 			<xsl:when test="$readOnly=1 and (self::ui:multiDropdown[count(.//ui:option[@selected]) &lt;= 1])">
 				<xsl:call-template name="readOnlyControl">
@@ -40,11 +38,8 @@
 				</xsl:call-template>
 			</xsl:when>
 			<xsl:when test="$readOnly=1">
-				<xsl:element name="ul">
+				<ul class="wc_list_nb">
 					<xsl:call-template name="commonAttributes"/>
-					<xsl:attribute name="class">
-						<xsl:text>wc_list_nb</xsl:text>
-					</xsl:attribute>
 					<xsl:if test="$myLabel">
 						<xsl:attribute name="aria-labelledby">
 							<xsl:value-of select="$myLabel/@id"/>
@@ -60,21 +55,15 @@
 							<xsl:apply-templates select="ui:value" mode="readOnlyList"/>
 						</xsl:otherwise>
 					</xsl:choose>
-				</xsl:element>
+				</ul>
 			</xsl:when>
 			<xsl:otherwise>
 				<xsl:variable name="isError" select="key('errorKey',$id)"/>
-				<xsl:element name="fieldset">
+				<fieldset aria-relevant="additions removals" aria-atomic="false">
 					<xsl:call-template name="commonWrapperAttributes">
 						<xsl:with-param name="isError" select="$isError"/>
 						<xsl:with-param name="class">wc_mfc</xsl:with-param>
 					</xsl:call-template>
-					<xsl:attribute name="aria-relevant">
-						<xsl:text>additions removals</xsl:text>
-					</xsl:attribute>
-					<xsl:attribute name="aria-atomic">
-						<xsl:text>false</xsl:text>
-					</xsl:attribute>
 					<xsl:if test="@min">
 						<xsl:attribute name="${wc.common.attrib.min}">
 							<xsl:value-of select="@min"/>
@@ -88,10 +77,7 @@
 					<xsl:call-template name="makeLegend">
 						<xsl:with-param name="myLabel" select="$myLabel"/>
 					</xsl:call-template>
-					<xsl:element name="ul">
-						<xsl:attribute name="class">
-							<xsl:text>wc_list_nb</xsl:text>
-						</xsl:attribute>
+					<ul class="wc_list_nb">
 						<xsl:choose>
 							<!-- content transform is dependant upon the actual component being transformed-->
 							<xsl:when test="self::ui:multiDropdown">
@@ -105,11 +91,11 @@
 								</xsl:call-template>
 							</xsl:otherwise>
 						</xsl:choose>
-					</xsl:element>
+					</ul>
 					<xsl:call-template name="inlineError">
 						<xsl:with-param name="errors" select="$isError"/>
 					</xsl:call-template>
-				</xsl:element>
+				</fieldset>
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>

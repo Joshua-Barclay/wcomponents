@@ -1,7 +1,5 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ui="https://github.com/bordertech/wcomponents/namespace/ui/v1.0" xmlns:html="http://www.w3.org/1999/xhtml" version="1.0">
 	<xsl:import href="wc.common.getHVGap.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
 	<!--
 		ui:columnLayout is one of the possible layout child elements of WPanel.
 		
@@ -53,6 +51,16 @@
 			<xsl:attribute name="class">
 				<xsl:text>columnLayout</xsl:text>
 			</xsl:attribute>
+			<xsl:variable name="width">
+				<xsl:choose>
+					<xsl:when test="ui:column[1]/@width">
+						<xsl:value-of select="ui:column[1]/@width"/>
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:number value="0"/>
+					</xsl:otherwise>
+				</xsl:choose>
+			</xsl:variable>
 			<xsl:variable name="hgap">
 				<xsl:call-template name="getHVGap">
 					<xsl:with-param name="divisor" select="2"/>
@@ -68,7 +76,7 @@
 				<xsl:when test="$cols=1"><!-- I don't know why people do this, but they do -->
 					<xsl:apply-templates select="ui:cell" mode="clRow">
 						<xsl:with-param name="align" select="ui:column[1]/@align"/>
-						<xsl:with-param name="width" select="ui:column[1]/@width"/>
+						<xsl:with-param name="width" select="$width"/>
 						<xsl:with-param name="hgap" select="$hgap"/>
 						<xsl:with-param name="vgap" select="$vgap"/>
 						<xsl:with-param name="cols" select="$cols"/>
@@ -77,7 +85,7 @@
 				<xsl:otherwise>
 					<xsl:apply-templates select="ui:cell[position() mod $cols = 1]" mode="clRow">
 						<xsl:with-param name="align" select="ui:column[1]/@align"/>
-						<xsl:with-param name="width" select="ui:column[1]/@width"/>
+						<xsl:with-param name="width" select="$width"/>
 						<xsl:with-param name="hgap" select="$hgap"/>
 						<xsl:with-param name="vgap" select="$vgap"/>
 						<xsl:with-param name="cols" select="$cols"/>

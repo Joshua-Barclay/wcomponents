@@ -4,29 +4,21 @@
 
 .wc_mfc {
 	button {
+		@include button($border: 0, $padding: 0);
+		@include background-image-icon('../images/delete.png');
 		margin-left: $hgap-small;
-		padding: 0;
-		vertical-align: bottom;
+		vertical-align: middle;
 
-		&:before {
-			content: url('../images/edit-delete-2.png');
-			display: inline-block;
-			vertical-align: bottom;
-		}
-
-		&[disabled]:before {
-			content: url('../images/edit-delete-2-d.png');
+		&[disabled] {
+			background-image: url('../images/delete-d.png');
 		}
 	}
 
 	li:first-child button {
-		&:before {
-			content: url('../images/edit-add-2.png');
-		}
+		background-image: url('../images/add.png');
 
-		&[disabled]:before {
-			content: url('../images/edit-add-2-d.png');
+		&[disabled] {
+			background-image: url('../images/add-d.png');
 		}
 	}
 }
-/* end wc.ui.multiFormComponent.icons.scss */

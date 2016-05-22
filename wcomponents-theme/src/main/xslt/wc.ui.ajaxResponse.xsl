@@ -1,7 +1,5 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ui="https://github.com/bordertech/wcomponents/namespace/ui/v1.0" xmlns:html="http://www.w3.org/1999/xhtml" version="1.0">
 	<xsl:import href="wc.constants.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
 	<!--
 		ui:ajaxResponse is the root element of a response to an ajax request. In
 		most cases this is processed in JavaScript.
@@ -47,9 +45,15 @@
 	-->
 	<xsl:template match="ui:ajaxResponse">
 		<xsl:choose>
-			<xsl:when test="ui:ajaxTarget/*[not(self::ui:file)]">
-				<xsl:apply-templates />
-				<xsl:apply-templates select=".//ui:dialog[ui:content][1]" mode="withcontent"/>
+			<xsl:when test="ui:ajaxTarget/node()[not(self::ui:file)]">
+				<xsl:element name="div">
+					<xsl:attribute name="class">wc-ajaxresponse</xsl:attribute>
+					<xsl:if test="@defaultFocusId">
+						<xsl:attribute name="data-focusid"><xsl:value-of select="@defaultFocusId"/></xsl:attribute>
+					</xsl:if>
+					<xsl:apply-templates />
+					<xsl:apply-templates select=".//ui:dialog[ui:content][1]" mode="withcontent"/>
+				</xsl:element>
 			</xsl:when>
 			<xsl:otherwise>
 				<xsl:element name="html">

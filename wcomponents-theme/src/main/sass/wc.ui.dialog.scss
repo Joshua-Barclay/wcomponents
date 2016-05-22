@@ -7,33 +7,61 @@ dialog {
 	background: transparent;
 	border: 0 none; // oh chrome, you try so hard to annoy me
 	display: none;
+	margin: 0;
+	padding: 0;
 	position: fixed;
 	z-index: 20;
 
-	&[open] {
-		@include flex($direction: column);
-		@include flex-shrink(0);
+	@include respond(mobile) {
+		@include border-box;
+		height: 98%;
+		left: 0;
+		margin: 1%;
+		top: 0;
+		width: 98%;
+
+		> header .wc_maxcont {
+			display: none;
+		}
 	}
 
 	> [aria-live] { // dialog content container
 		@include border;
 		background-color: $wc-ui-color-global-bg;
+		height: 100%;
 		overflow: auto;
 		padding: $hgap-normal;
 
-		&[aria-busy='true'] { // override usual transparency of busy elements because that's just wierd with a dialog's content.
-			//scss-lint:disable ImportantRule
+
+		&[aria-busy='true'] {
+			// override usual transparency of busy elements because that's just wrong with a dialog's content.
+			// scss-lint:disable ImportantRule
 			background-color: $wc-ui-color-global-bg !important;
+		}
+	}
+
+	&[open] {
+		@include flex($direction: column);
+
+		> [aria-live] {
+			@include flex-grow(1);
+		}
+
+		&.wc_max > [aria-live] {
+			height: 100%;
 		}
 	}
 
 	> header,
 	> footer { // top and bottom bars of dialog
+		@include flex-grow(0);
+		@include flex-shrink(0);
 		background-color: $wc-ui-color-dialog-head-bg;
 	}
 
 	> header {
 		@include flex($direction: row-reverse, $wrap: wrap, $justify: space-between, $align-items: center);
+		padding: $vgap-small 0 $vgap-small $hgap-small;
 
 		> h1 { // the title
 			@include flex-grow(1);
@@ -57,10 +85,8 @@ dialog {
 // dialog close control
 // NOTE: for resize handle and max/restore control see wc.ui.resizeable.scss.
 .wc_dialog_close.wc_btn_nada {
-	background-image: url('../images/dialog-close.sprite.png');
-	height: 16px;
-	width: 16px;
-
+	@include background-image($url: '../images/dialog-close-sprite.png', $height: cover, $x: 0, $y: 0);
+	@include make-box;
 	&:focus,
 	&:hover {
 		background-position: 100% 0;

@@ -1,8 +1,6 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ui="https://github.com/bordertech/wcomponents/namespace/ui/v1.0" xmlns:html="http://www.w3.org/1999/xhtml" version="1.0">
 	<xsl:import href="wc.constants.xsl"/>
-	<xsl:import href="wc.debug.debugInfo.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 	<!--
 		Transform for ui:fieldIndicator which is output of WFieldErrorIndicator and
 		WFieldWarningIndicator. This is normally output to provide inline messaging in
@@ -24,26 +22,15 @@
 		indicator within the field so that it is in a place appropriate to the form
 		component for which it is providing feedback.
 	
-		Child Elements:
-		* ui:message
-		
-		
-		
-		See wc.common.message.xsl
 	-->
 	<xsl:template match="ui:fieldIndicator">
-		<xsl:element name="ul">
-			<xsl:attribute name="id">
-				<xsl:value-of select="@id"/>
-			</xsl:attribute>
+		<ul id="{@id}">
 			<xsl:attribute name="class">
-				<xsl:value-of select="@type"/>
+				<xsl:call-template name="commonClassHelper"/>
+				<xsl:value-of select="concat(' ', @type)"/>
 			</xsl:attribute>
-			<xsl:if test="$isDebug=1">
-				<xsl:call-template name="debugAttributes"/>
-			</xsl:if>
 			<xsl:apply-templates/>
-		</xsl:element>
+		</ul>
 	</xsl:template>
 	<!--
 		Currently there is a consistency problem with the use of WFieldErrorIndicator

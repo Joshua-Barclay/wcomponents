@@ -22,30 +22,21 @@
 @import 'vars_all.scss';
 
 button {
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
 	margin: 0;
 }
-
 
 // CLASS wc_btn_nada has all style stripped. CLASS wc_btn_link is made to look like a link.
 .wc_btn {
 	&_link,
 	&_nada {
 		background-color: transparent;
-		background-image: none;
 		border: 0 none;
-		border-radius: 0;
 		cursor: pointer;
-		font-family: inherit;
-		font-size: inherit;
-		line-height: inherit;
 		padding: 0;
-
-		&[disabled],
-		&:hover,
-		&:focus,
-		&:active {
-			background-image: none;
-		}
+		text-align: inherit;
 
 		&[disabled] {
 			color: $wc-ui-color-disabled-fg;
@@ -59,6 +50,10 @@ button {
 	&_link {
 		color: $wc-ui-color-link;
 		text-decoration: underline;
+
+		&.wc_btn_img {
+			text-decoration: none;
+		}
 	}
 }
 
@@ -70,4 +65,3 @@ button {
 		cursor: auto;
 	}
 }
-/* end wc.common.buttons.scss */

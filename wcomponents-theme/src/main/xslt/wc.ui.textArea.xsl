@@ -7,9 +7,7 @@
 	<xsl:import href="wc.common.required.xsl"/>
 	<xsl:import href="wc.constants.xsl"/>
 	<xsl:import href="wc.common.missingLabel.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
-<!--
+	<!--
 		Simple transform to textarea.
 
 		Note on maxLength:
@@ -101,7 +99,7 @@
 						-->
 						<xsl:if test="string-length(text()) &gt; @maxLength">
 						<xsl:attribute name="class">
-								<xsl:text>wc_error</xsl:text>
+							<xsl:text>wc_error</xsl:text>
 						</xsl:attribute>
 						</xsl:if>
 					</xsl:element>

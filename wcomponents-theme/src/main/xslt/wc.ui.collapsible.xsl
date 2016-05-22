@@ -2,9 +2,7 @@
 	<xsl:import href="wc.common.hide.xsl"/>
 	<xsl:import href="wc.common.aria.live.xsl"/>
 	<xsl:import href="wc.constants.xsl"/>
-	<xsl:import href="wc.debug.collapsible.xsl"/>
-	<xsl:output method="html" doctype-public="XSLT-compat" encoding="UTF-8" indent="no" omit-xml-declaration="yes"/>
-	<xsl:strip-space elements="*"/>
+	<xsl:import href="wc.common.n.className.xsl"/>
 <!--
 	WCollapsible is a container with hideable content.
 
@@ -24,6 +22,7 @@
 			<xsl:attribute name="id">
 				<xsl:value-of select="@id"/>
 			</xsl:attribute>
+			<xsl:call-template name="makeCommonClass"/>
 			<xsl:if test="$collapsed != 1">
 				<xsl:attribute name="open">
 					<xsl:text>open</xsl:text>
@@ -43,9 +42,6 @@
 			</xsl:call-template>
 			<xsl:call-template name="hideElementIfHiddenSet"/>
 			<xsl:apply-templates select="ui:margin"/>
-			<xsl:if test="$isDebug=1">
-				<xsl:call-template name="collapsible-debug"/>
-			</xsl:if>
 			<xsl:element name="${wc.dom.html5.element.summary}">
 				<xsl:attribute name="tabIndex">
 					<xsl:text>0</xsl:text>

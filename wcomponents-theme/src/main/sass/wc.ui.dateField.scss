@@ -68,19 +68,17 @@ dialog [role='combobox'] > [role='listbox'] {
 
 // calendar launch button
 .wc_wdf_cal {
+	@include background-image-icon('../images/date.png');
+	@include button($border: 0);
+	@include border($pos: left);
+
 	&:hover,
 	&:focus {
 		background-color: $wc-ui-color-invite-bg;
 	}
 
-	&:before {
-		content: url('../images/date.png');
-		position: relative;
-		top: 2px;
-	}
-
-	&[disabled]:before {
-		content: url('../images/date-d.png');
+	&[disabled] {
+		background-image: url('../images/date-d.png');
 	}
 }
 
@@ -106,7 +104,6 @@ dialog [role='combobox'] > [role='listbox'] {
 		@include border($pos: bottom);
 
 		td:last-child { // container of the close button
-			padding-right: 0;
 			text-align: right;
 		}
 	}
@@ -145,7 +142,8 @@ dialog [role='combobox'] > [role='listbox'] {
 	cursor: pointer;
 	padding: $vgap-small $hgap-small;
 	text-align: center;
-	width: 100%;
+	width: 3em;
+	min-width: 100%;
 
 	&:hover,
 	&:focus {
@@ -166,4 +164,79 @@ dialog [role='combobox'] > [role='listbox'] {
 .wc_wdf_today { // today
 	@include outline();
 }
-/* end wc.ui.dateField.scss */
+
+
+// The main purpose of this CSS is to make the pop-up calendar full screen. We make all of the buttons bigger to make
+// them easier for fingers to push and finally add a close button to make up for the lack of an escape key.
+// The calendar container is a single generated element with a fixed id.
+@include respond(mobile) {
+	#wc-calbox {
+		height: 100%;
+		left: 0;
+		position: fixed;
+		top: 0;
+		width: 100%;
+	}
+
+	#wc-calendar {
+		font-size: 1.5em;
+		height: 100%;
+
+		thead {
+			tr {
+				vertical-align: middle;
+			}
+
+			td { // The td in the thead contain the form controls to change the date or close the calendar.
+				padding: $hgap-normal;
+			}
+
+			button {
+				background-color: transparent;
+				border: 0 none;
+				margin-left: $hgap-normal;
+				padding: 0;
+				vertical-align: middle;
+
+				&::before {
+					@include make-box;
+				}
+			}
+		}
+
+		th { // The th contain the day name addreviations.
+			font-size: 1em;
+		}
+	}
+
+	.wc_wdf_mv {
+		&[value='-1']::before {
+			content: url('../images/cal-mob-back1.svg');
+		}
+
+		&[value='1']::before {
+			content: url('../images/cal-mob-forward1.svg');
+		}
+
+		&[value='t']::before {
+			content: url('../images/cal-mob-today.svg');
+		}
+	}
+
+	.wc_wdf_cls::before {
+		content: url('../images/cal-mob-close.svg');
+	}
+
+	#wc-caldaybox .wc_wdf_pick {
+		height: 100%;
+		width: 100%;
+	}
+}
+
+// need this AFTER the general mobile respond
+// scss-lint:disable MergeableSelector
+#wc-calendar {
+	@include respond(ipad) { // weird iOS9 bug
+		max-height: 704px;
+	}
+}
