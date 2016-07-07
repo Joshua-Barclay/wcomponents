@@ -130,35 +130,39 @@ define(["wc/dom/event",
 			 * @public
 			 * @param {Element} element The element which is being changed.
 			 * @param {Object} [obj] A trigger definition dto.
+			 * @param {Boolean} [ignoreAncestor] Indicates to not look up the tree when trying to find a trigger.
 			 */
-			this.requestLoad = function(element, obj) {
-				var trigger,
+			this.requestLoad = function(element, obj, ignoreAncestor) {
+				var trigger = triggerManager.getTrigger(element, ignoreAncestor),
 					alias,
 					loads,
-					id;
-				if (element.hasAttribute("aria-controls")) {
-					trigger = triggerManager.getTrigger(element);
+					id,
+					controls;
 
-					if (!trigger) {
-						if (obj) {
-							this.register(obj);
+				if (!trigger) {
+					if (obj) {
+						this.register(obj);
+					}
+					else {
+						id = element.id;
+						alias = element.getAttribute(ALIAS);
+						if ((controls = element.getAttribute("aria-controls"))) {
+							loads = controls.split(" ");
 						}
 						else {
-							id = element.id;
-							alias = element.getAttribute(ALIAS);
-							loads = element.getAttribute("aria-controls").split(" ");
-							this.register({
-								id: id,
-								loads: loads,
-								alias: alias});
+							loads = [id];
 						}
-
-						trigger = triggerManager.getTrigger(element);
+						this.register({
+							id: id,
+							loads: loads,
+							alias: alias});
 					}
 
-					if (trigger) {
-						fireThisTrigger(element, trigger);
-					}
+					trigger = triggerManager.getTrigger(element);
+				}
+
+				if (trigger) {
+					fireThisTrigger(element, trigger);
 				}
 			};
 

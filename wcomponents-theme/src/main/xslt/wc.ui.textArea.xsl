@@ -22,14 +22,14 @@
 		text (without an immediate character count) and then paste into the textarea.
 		The HTML5 browsers have it wrong, we have it right.
 	-->
-	<xsl:template match="ui:textArea">
+	<xsl:template match="ui:textarea">
 		<xsl:variable name="id" select="@id"/>
 		<xsl:variable name="readOnly">
 			<xsl:if test="@readOnly=$t">
 				<xsl:number value="1"/>
 			</xsl:if>
 		</xsl:variable>
-		<xsl:variable name="tickerId" select="concat(@id,'${wc.ui.maxLength.ticker.id.suffix}')"/>
+		<xsl:variable name="tickerId" select="concat(@id,'_tick')"/>
 		<xsl:variable name="myLabel" select="key('labelKey',$id)"/>
 		<xsl:choose>
 			<xsl:when test="$readOnly=1">
@@ -82,7 +82,6 @@
 					<xsl:value-of select="."/>
 				</xsl:element>
 				<xsl:if test="@maxLength">
-					<xsl:variable name="chrs" select="@maxLength - string-length(text())"/>
 					<xsl:element name="output">
 						<xsl:attribute name="id">
 							<xsl:value-of select="$tickerId"/>
@@ -94,9 +93,6 @@
 							<xsl:value-of select="@id"/>
 						</xsl:attribute>
 						<xsl:call-template name="hiddenElement"/>
-						<!-- This is surely implicit on an output element.
-						<xsl:call-template name="setARIALive"/>
-						-->
 						<xsl:if test="string-length(text()) &gt; @maxLength">
 						<xsl:attribute name="class">
 							<xsl:text>wc_error</xsl:text>

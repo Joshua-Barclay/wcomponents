@@ -7,7 +7,7 @@
 
 		<xsl:variable name="tableId" select="../../@id"/>
 		
-		<th id="{concat($tableId,'${wc.ui.table.id.thead.th.suffix}', position())}" scope="col">
+		<th id="{concat($tableId,'_thh', position())}" scope="col">
 			<xsl:if test="$hasRole &gt; 0">
 				<xsl:attribute name="role">
 					<xsl:text>columnheader</xsl:text>
@@ -19,7 +19,7 @@
 						<xsl:value-of select="@align"/>
 					</xsl:when>
 					<xsl:otherwise>
-						<xsl:text>${wc.common.align.std}</xsl:text>
+						<xsl:text>left</xsl:text>
 					</xsl:otherwise>
 				</xsl:choose>
 			</xsl:attribute>
@@ -106,7 +106,7 @@
 					</xsl:attribute>
 				</xsl:if>
 			</xsl:if>
-			<xsl:apply-templates select="ui:decoratedLabel">
+			<xsl:apply-templates select="ui:decoratedlabel">
 				<xsl:with-param name="output" select="'div'"/>
 			</xsl:apply-templates>
 		</th>

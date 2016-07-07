@@ -1,43 +1,24 @@
 /* wc.ui.dialog.scss */
 // The actual dialog. Its position is set on open such that it sits in the middle of the viewport. Margin:auto only
 // works in Chrome and Webkit.
-@import 'wc.ui.dialog_vars.scss';
+@import 'dialog_vars';
 
 dialog {
-	background: transparent;
-	border: 0 none; // oh chrome, you try so hard to annoy me
+	@include border($width: 0); // oh chrome, you try so hard to annoy me
+	@include border-box;
+	@include tight-box;
 	display: none;
-	margin: 0;
-	padding: 0;
+	height: 100%;
+	left: 0;
 	position: fixed;
-	z-index: 20;
-
-	@include respond(mobile) {
-		@include border-box;
-		height: 98%;
-		left: 0;
-		margin: 1%;
-		top: 0;
-		width: 98%;
-
-		> header .wc_maxcont {
-			display: none;
-		}
-	}
+	top: 0;
+	width: 100%;
+	z-index: $z-index-dialog;
 
 	> [aria-live] { // dialog content container
-		@include border;
-		background-color: $wc-ui-color-global-bg;
+		@include padded-box;
 		height: 100%;
 		overflow: auto;
-		padding: $hgap-normal;
-
-
-		&[aria-busy='true'] {
-			// override usual transparency of busy elements because that's just wrong with a dialog's content.
-			// scss-lint:disable ImportantRule
-			background-color: $wc-ui-color-global-bg !important;
-		}
 	}
 
 	&[open] {
@@ -56,24 +37,34 @@ dialog {
 	> footer { // top and bottom bars of dialog
 		@include flex-grow(0);
 		@include flex-shrink(0);
-		background-color: $wc-ui-color-dialog-head-bg;
+
+		button:before {
+			padding: $wc-gap-small;
+		}
 	}
 
 	> header {
 		@include flex($direction: row-reverse, $wrap: wrap, $justify: space-between, $align-items: center);
-		padding: $vgap-small 0 $vgap-small $hgap-small;
+		padding: $wc-gap-small 0 $wc-gap-small $wc-gap-small;
 
 		> h1 { // the title
 			@include flex-grow(1);
-			color: $wc-ui-color-dialog-head-fg;
-			font-size: 1em;
-			margin: 0;
+			@include margin($size: 0);
+			font-size: 1rem;
 		}
 
 		> span { // the header control 'block'
 			@include flex-align-self(flex-start);
 			line-height: 0;
-			margin-right: 0.25em;
+			margin-right: $wc-gap-small;
+		}
+
+		.wc_btn_icon + button {
+			margin-left: $wc-gap-small;
+		}
+
+		.wc_maxcont {
+			display: none;
 		}
 	}
 
@@ -81,15 +72,3 @@ dialog {
 		display: none; // only show footer is resizeable AND using desktop css - see wc.ui.dialog.dt.scss
 	}
 }
-
-// dialog close control
-// NOTE: for resize handle and max/restore control see wc.ui.resizeable.scss.
-.wc_dialog_close.wc_btn_nada {
-	@include background-image($url: '../images/dialog-close-sprite.png', $height: cover, $x: 0, $y: 0);
-	@include make-box;
-	&:focus,
-	&:hover {
-		background-position: 100% 0;
-	}
-}
-/* end wc.ui.dialog.scss */

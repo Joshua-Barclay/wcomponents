@@ -3,8 +3,8 @@
  * @requires module:wc/ajax/ajax
  * @requires module:wc/loader/prefetch
  */
-define(["wc/ajax/ajax", "wc/loader/prefetch", "module"],
-	function(ajax, prefetch, module) {
+define(["wc/ajax/ajax", "wc/loader/prefetch", "wc/config", "module"],
+	function(ajax, prefetch, wcconfig, module) {
 		"use strict";
 		/**
 		 * @constructor
@@ -21,7 +21,7 @@ define(["wc/ajax/ajax", "wc/loader/prefetch", "module"],
 			 * @param {String} fileName The file name of the resource to load.
 			 */
 			this.preload = function(fileName) {
-				var url = getUrl(fileName);
+				var url = this.getResourceUrl(fileName);
 				prefetch.request(url);
 			};
 
@@ -44,27 +44,51 @@ define(["wc/ajax/ajax", "wc/loader/prefetch", "module"],
 			 * @returns {?Document|Promise} The loaded file or a Promise resolved with the loaded file if async is true.
 			 */
 			this.load = function(fileName, asText, async) {
-				var url = getUrl(fileName);
+				var url = this.getResourceUrl(fileName);
 				console.log("Loading " + url);
 				return ajax.loadXmlDoc(url, null, asText, async);
 			};
 
-			function getUrl(fileName) {
-				var path, idx, cachebuster;
-				if (module && module.config) {
-					path = module.config().xmlBaseUrl;
-					cachebuster = module.config().cachebuster;
+			/**
+			 * Gets the URL to a resource in the theme resource directory.
+			 * @param {string} fileName The file name of a resource in the resource directory.
+			 * @returns {string} The URL to the resource.
+			 */
+			this.getResourceUrl = function(fileName) {
+				var url, path, idx, cachebuster, config = getConfig();
+				if (config) {
+					path = config.resourceBaseUrl;
+					cachebuster = config.cachebuster;
 				}
 				else {
 					idx = module.uri.indexOf(module.id);
 					path = module.uri.substring(0, idx);
-					path = path.replace(/\/[^\/]+\/$/, "/${xml.target.dir.name}/");
+					path = path.replace(/\/[^\/]+\/$/, "/${resource.target.dir.name}/");
 				}
 
-				baseUrl = baseUrl || path || "";  // ${xml.target.dir.name}/";
-				var url = baseUrl + fileName + "?" + cachebuster;
+				baseUrl = baseUrl || path || "";  // ${resource.target.dir.name}/";
+				if (fileName) {
+					url = baseUrl + fileName + "?" + cachebuster;
+				}
+				else {
+					url = baseUrl;
+				}
 				return url;
+			};
+
+			function getConfig() {
+				var config = wcconfig.get("wc/loader/resource");
+				if (!config) {
+					if (window.System && window.System.config) {
+						config = window.System.config;
+					}
+					else if (module && module.config) {
+						config = module.config();
+					}
+				}
+				return config;
 			}
+
 		}
 		return /** @alias module:wc/loader/resource */ new Loader();
 	});

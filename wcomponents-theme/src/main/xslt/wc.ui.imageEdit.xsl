@@ -9,22 +9,25 @@
 	-->
 	<xsl:template name="imageEditButton">
 		<xsl:param name="text"/>
-		<button type="button" data-editor="{@editor}">
+		<button type="button" data-wc-editor="{@editor}">
 			<xsl:choose>
 				<xsl:when test="self::ui:image">
-					<xsl:attribute name="data-selector">
+					<xsl:attribute name="data-wc-selector">
 						<xsl:value-of select="@editor"/>
 					</xsl:attribute>
-					<xsl:attribute name="data-img">
-						<xsl:value-of select="@id"/>
-					</xsl:attribute>
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:attribute name="data-selector">
+					<xsl:attribute name="data-wc-img">
 						<xsl:value-of select="@id"/>
 					</xsl:attribute>
 					<xsl:attribute name="class">
-						<xsl:text>wc_btn_camera</xsl:text>
+						<xsl:text>wc_btn_icon</xsl:text>
+					</xsl:attribute>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:attribute name="data-wc-selector">
+						<xsl:value-of select="@id"/>
+					</xsl:attribute>
+					<xsl:attribute name="class">
+						<xsl:text>wc_btn_camera wc_btn_icon</xsl:text>
 					</xsl:attribute>
 				</xsl:otherwise>
 			</xsl:choose>

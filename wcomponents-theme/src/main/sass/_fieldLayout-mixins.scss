@@ -1,0 +1,28 @@
+@import 'fieldLayout_vars';
+
+$wc-label-width-slug: wc_fld_lblwth !default;
+$wc-input-width-slug: wc_fld_inpw !default;
+
+@mixin wc-fld-layout($lwdth) {
+	$lw: $lwdth * 1%;
+	$iw: 100% - $lw;
+
+	.#{$wc-label-width-slug}_#{$lwdth} {
+		&.wc_fld_flat > .wc-field > :first-child {
+			width: $lw;
+		}
+
+		&.wc_fld_stacked > .wc-field > .wc-input {
+			margin-left: $lw;
+		}
+
+		> .wc-field > .wc-input {
+			max-width: $iw;
+			width: $iw;
+		}
+	}
+
+	.#{$wc-input-width-slug}_#{$lwdth} > .wc-input {
+		width: $lw;
+	}
+}

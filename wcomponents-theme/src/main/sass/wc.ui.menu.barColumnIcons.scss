@@ -1,0 +1,34 @@
+/* wc.ui.menu.barColumn.icon.scss */
+// The opener iconoiography for WMenu type BAR, type FLYOUT, type COLUMN.
+@import 'menu_vars';
+
+.wc-submenu-o {
+	[role='menubar'] &:after {
+		@include wc-icon($fa-var-caret-down);
+		margin-left: $wc-ui-menu-bar-column-opener-indicator-before-after;
+	}
+
+	[role='menu'] &:after {
+		content: '';
+		display: none;
+	}
+
+	[role='menu'] & > .wc-decoratedlabel:after {
+		@include wc-icon($fa-var-caret-right);
+		display: table-cell;
+		padding-left: $wc-ui-menu-bar-column-opener-indicator-before-after;
+	}
+
+	&.wc_hbgr:after { // the hambirger icon
+		margin-left: $wc-gap-small;
+	}
+}
+
+.closesubmenu::before {
+	@include wc-icon($fa-var-caret-left);
+	margin-right: $wc-gap-normal;
+}
+
+.wc_hbgr::before {
+	@include wc-icon($fa-var-bars);
+}

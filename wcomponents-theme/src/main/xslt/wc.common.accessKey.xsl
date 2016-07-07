@@ -8,8 +8,8 @@
 		Implementing components
 
 		Every input component implements accessKey and displays its toolTip on
-		its associated WLabel (see wc.ui.label.xsl)	element or a HTML Link 
-		element will implement accessKey directly and will output their own 
+		its associated WLabel (see wc.ui.label.xsl)	element or a HTML Link
+		element will implement accessKey directly and will output their own
 		toolTip within their HTML artefact.
 		wc.ui.button.xsl
 		wc.ui.fieldSet.xsl
@@ -30,14 +30,17 @@
 		on the element since the tooltip helper template will add content to the element.
 	-->
 	<xsl:template name="accessKey">
+		<xsl:param name="useToolTip" select="1"/>
 		<xsl:if test="@accessKey">
 			<xsl:attribute name="accesskey">
 				<xsl:value-of select="@accessKey"/>
 			</xsl:attribute>
-			<xsl:attribute name="aria-describedby">
-				<xsl:value-of select="concat(@id,'${wc.ui.accesskey.id.suffix}')"/>
-			</xsl:attribute>
-			<xsl:call-template name="tooltip"/>
+			<xsl:if test="$useToolTip=1">
+				<xsl:attribute name="aria-describedby">
+					<xsl:value-of select="concat(@id,'_wctt')"/>
+				</xsl:attribute>
+				<xsl:call-template name="tooltip"/>
+			</xsl:if>
 		</xsl:if>
 	</xsl:template>
 </xsl:stylesheet>

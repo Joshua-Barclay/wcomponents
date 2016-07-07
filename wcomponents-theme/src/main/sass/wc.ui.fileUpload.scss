@@ -1,57 +1,37 @@
 /* wc.ui.fileUpload.scss */
-@import 'mixins_common.scss';
+@import 'mixins-common';
 
-%a-button {
-	display: inline-block;
-	vertical-align: top;
-}
-
-.fileUpload {
+.wc-fileupload {
 	a {
-		@extend %a-button;
 		@include flex-grow(1);
 		@include flex-shrink(1);
-		max-width: calc(100% - #{$line-size});
+		display: inline-block;
+		max-width: calc(100% - 2em);
 
 		img {
 			max-width: 100%;
 		}
 
 		~ button {
-			@extend %a-button;
 			@include flex-shrink(0);
-			@include button;
-			@include background-image-icon('../images/delete.png');
-			margin-left: $hgap-small;
-
-			&[disabled] {
-				background-image: url('../images/delete-d.png');
-			}
+			display: inline-block;
+			margin-left: $wc-gap-small;
 		}
-	}
-
-	.file {
-		@include flex($justify: space-between, $align-items: flex-start);
-		@include border;
-		background-color: $wc-ui-color-highlight-bg;
-		color: $wc-ui-color-highlight-fg;
-		padding: $hgap-small;
-		word-wrap: break-word;
 	}
 
 	> .wc_filelist {
 		display: table-cell;  // horrendously wrong no doubt but fixes columns
-		padding-top: $hgap-small;
+		padding-top: $wc-gap-small;
 
-		.file + .file {
-			margin-top: $vgap-normal;
+		.wc-file + .wc-file {
+			margin-top: $wc-gap-normal;
 		}
 
 		&.wc_list_flat {
-			.file {
+			.wc-file {
 				display: inline-block;
-				margin-right: $hgap-small;
-				margin-top: $hgap-small;
+				margin-right: $wc-gap-small;
+				margin-top: $wc-gap-small;
 
 				// The excessive depth here could be re-written I suppose...
 				// scss-lint:disable NestingDepth
@@ -70,34 +50,23 @@
 	&[data-wc-cols] {
 		> div {
 			@include flex($justify: space-between);
-			margin-top: $hgap-small;
+			margin-top: $wc-gap-small;
 		}
 
 		ul {
 			@include flex-grow(1);
 
 			+ ul {
-				margin-left: $hgap-small;
+				margin-left: $wc-gap-small;
 			}
 		}
 
 		li + li {
-			margin-top: $hgap-small;
+			margin-top: $wc-gap-small;
 		}
 	}
 
-
-	&.wc_dragging [type=file] {
-		background-color: $wc-ui-color-invite-bg;  //#c0ffee
-		outline: 2px dotted $wc-ui-color-invite-fg;
-	}
-
-	.wc_btn_camera {
-		@include button($width: 1em, $height: 1em);
-		@include background-image($url: '../images/camera-web.png', $height: 1em, $width: 1em);
-	}
-
-	input[type='file'][data-editor] {
+	input[type='file'][data-wc-editor] {
 		max-width: calc(100% - 2em); // leave room for the edit button.
 
 		&,
@@ -105,4 +74,20 @@
 			vertical-align: bottom;
 		}
 	}
+
+	.wc_btn_camera {
+		display: none;  // This should only be available on desktop browsers
+	}
+}
+
+.wc-file {
+	@include flex($justify: space-between, $align-items: flex-start);
+	@include border;
+	padding: $wc-gap-small;
+	word-wrap: break-word;
+}
+
+input[type='file']::-webkit-file-upload-button {
+	@include button($border: 0);
+	@include border($pos: right);
 }

@@ -13,7 +13,6 @@
 	<property name="script.rootdir" location="${common.src.rootdir}/js"/>
 	<property name="impl.script.rootdir" location="${impl.src.main.dir}/js"/>
 	<property name="script.build.target.dir" location="${target.rootdir}/${script.target.dir.name}"/>
-	<property name="plugin.script.dir.name" value="js"/>
 
 	<target name="build"
 		depends="init, copySrc, optimizeJS, copyLibs"
@@ -47,7 +46,18 @@
 		<stopwatch name="copySrc" action="start"/>
 		<property name="lib.tmp.src.dir" location="${script.tmp.src.dir}/lib"/>
 		<copy file="${basedir}/node_modules/requirejs/require.js" tofile="${lib.tmp.src.dir}/require.js"/>
+		<copy todir="${lib.tmp.src.dir}" overwrite="true">
+			<fileset dir="${basedir}/node_modules/systemjs/dist">
+				<include name="*.*"/>
+			</fileset>
+		</copy>
+		<copy todir="${lib.tmp.src.dir}/getusermedia-js" overwrite="true">
+			<fileset dir="${basedir}/node_modules/getusermedia-js/dist">
+				<include name="**/*"/>
+			</fileset>
+		</copy>
 		<copy file="${basedir}/node_modules/sprintf-js/src/sprintf.js" tofile="${lib.tmp.src.dir}/sprintf.js"/>
+		<copy file="${basedir}/node_modules/timezone-js/src/date.js" tofile="${lib.tmp.src.dir}/date.js"/>
 		<copy todir="${lib.tmp.src.dir}/dojo" overwrite="true">
 			<fileset dir="${basedir}/node_modules/dojo">
 				<include name="domReady.js"/>
@@ -79,30 +89,7 @@
 		<copy todir="${script.tmp.src.dir}/wc/i18n" overwrite="true">
 			<fileset dir="${i18n.build.target.dir}" includes="*.js"/>
 		</copy>
-
-		<!-- default plugins js -->
-		<copy todir="${script.tmp.src.dir}/${plugins.target.dir.name}" overwrite="true">
-			<fileset dir="${common.src.plugin.dir}" includes="**/${plugin.script.dir.name}/**/*.js" erroronmissingdir="false"/>
-			<filterchain>
-				<expandproperties/>
-			</filterchain>
-		</copy>
-		<!-- implementation plugins js -->
-		<copy todir="${script.tmp.src.dir}/${plugins.target.dir.name}" overwrite="true">
-			<fileset dir="${impl.src.plugin.dir}" includes="**/${plugin.script.dir.name}/**/*.js" erroronmissingdir="false"/>
-			<filterchain>
-				<expandproperties/>
-			</filterchain>
-		</copy>
-
 		<javascript.lint jsdir="${script.tmp.src.dir}"/>
-		<javascript.lint jsdir="${common.src.plugin.dir}"/><!-- The plugins may not be included and therefore not checked above so check them explicitly here unless the build changes so they are always built -->
-		<if>
-			<available file="${impl.src.plugin.dir}" type="dir"/>
-			<then>
-				<javascript.lint jsdir="${impl.src.plugin.dir}"/><!-- The plugins may not be included and therefore not checked above so check them explicitly here unless the build changes so they are always built -->
-			</then>
-		</if>
 		<stopwatch name="copySrc" action="total"/>
 	</target>
 
@@ -117,10 +104,16 @@
 				<exclude name="*jquery*"/>
 			</fileset>
 		</copy>
+		<copy todir="${lib.build.target.dir}/tracking" >
+			<fileset dir="${basedir}/node_modules/tracking" includes="build/**"/>
+		</copy>
 		<copy todir="${lib.build.target.dir}/mustache" >
 			<fileset dir="${basedir}/node_modules/mustache" includes="**">
 				<exclude name="*wrappers*"/>
 			</fileset>
+		</copy>
+		<copy todir="${lib.build.target.dir}/bower_components" failonerror="false"><!-- Optionally copy any bower components to the lib dir -->
+			<fileset dir="${basedir}/bower_components" includes="**"/>
 		</copy>
 		<copy file="${basedir}/node_modules/promise-polyfill/Promise.min.js" tofile="${lib.build.target.dir}/Promise.min.js"/>
 		<copy file="${basedir}/node_modules/accessibility-developer-tools/dist/js/axs_testing.js" tofile="${lib.build.target.dir}/axs_testing.js"/>

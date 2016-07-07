@@ -1,6 +1,6 @@
-define(["wc/has", "wc/dom/event", "wc/dom/uid", "wc/dom/classList", "wc/timers",
-	"wc/loader/resource", "wc/i18n/i18n", "fabric", "Mustache", "wc/ui/dialogFrame"],
-function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dialogFrame) {
+define(["wc/has", "wc/dom/event", "wc/dom/uid", "wc/dom/classList", "wc/timers", "wc/dom/shed", "wc/config",
+	"wc/loader/resource", "wc/i18n/i18n", "fabric", "Mustache", "wc/ui/dialogFrame", "getUserMedia"],
+function(has, event, uid, classList, timers, shed, wcconfig, loader, i18n, fabric, Mustache, dialogFrame, getUserMedia) {
 	var imageEdit = new ImageEdit();
 
 	/**
@@ -14,18 +14,20 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 		var inited,
 			TEMPLATE_NAME = "imageEdit.xml",
 			imageCapture = new ImageCapture(),
+			faceDetection = new FaceDetection(),
 			overlayUrl,
 			defaults = {
-				width: 300,
-				height: 400
+				width: 320,
+				height: 240
 			},
 			stateStack = [],
 			registeredIds = {},
-			fbCanvas, fbImage, frameConfig;
+			fbCanvas, fbImage;
 
 
-		function getDialogFrameConfig() {
+		function getDialogFrameConfig(onclose) {
 			return {
+				onclose: onclose,
 				id: "wc_img_editor",
 				modal: true,
 				resizable: true,
@@ -58,11 +60,11 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 					function clickEvent($event) {
 						var img, uploader, file,
 							element = $event.target,
-							id = element.getAttribute("data-selector");
+							id = element.getAttribute("data-wc-selector");
 						if (id && element.localName === "button") {
 							uploader = document.getElementById(id);
 							if (uploader) {
-								img = document.getElementById(element.getAttribute("data-img"));
+								img = document.getElementById(element.getAttribute("data-wc-img"));
 								if (img) {
 									file = imgToFile(img);
 									multiFileUploader.upload(uploader, [file]);
@@ -70,7 +72,7 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 								else {
 									imageEdit.editFiles({
 										id: id,
-										name: element.getAttribute("data-editor")
+										name: element.getAttribute("data-wc-editor")
 									}).then(function(files) {
 										multiFileUploader.upload(uploader, files, true);
 									}, function(message) {
@@ -96,7 +98,7 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 			var editorId, result = registeredIds[obj.id] || registeredIds[obj.name];
 			if (!result) {
 				if ("getAttribute" in obj) {
-					editorId = obj.getAttribute("data-editor");
+					editorId = obj.getAttribute("data-wc-editor");
 				}
 				else {
 					editorId = obj.editorId;
@@ -133,12 +135,7 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 							}
 						}
 						else if (config.camera) {
-							if (has("rtc-gum")) {
-								promise = editFile(config, null).then(saveEditedFile, reject);
-							}
-							else {
-								reject(i18n.get("${wc.ui.imageEdit.message.nortcgum}"));
-							}
+							promise = editFile(config, null).then(saveEditedFile, reject);
 						}
 					}
 					catch (ex) {
@@ -186,11 +183,16 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 					win: resolve.bind(promise),
 					lose: reject.bind(promise)
 				};
-				getEditor(callbacks, file).then(function() {
+				getEditor(config, callbacks, file).then(function() {
 					var fileReader;
 					fbCanvas = new fabric.Canvas("wc_img_canvas");
 					fbCanvas.setWidth(config.width || defaults.width);
 					fbCanvas.setHeight(config.height || defaults.height);
+					fbCanvas.on("selection:cleared", function() {
+						if (fbImage) {
+							fbCanvas.setActiveObject(fbImage);
+						}
+					});
 					overlayUrl = config.overlay;
 					if (file) {
 						fileReader = new FileReader();
@@ -198,8 +200,10 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 						fileReader.readAsDataURL(file);
 					}
 					else {
-						imageCapture.initialize(fbCanvas.getWidth(), fbCanvas.getHeight());
-						imageCapture.play();
+						imageCapture.play({
+							width: fbCanvas.getWidth(),
+							height: fbCanvas.getHeight()
+						});
 					}
 				});
 			});
@@ -210,63 +214,96 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 		 * Callback invoked when a FileReader instance has loaded.
 		 */
 		function filereaderLoaded($event) {
-			loadImageFromDataUrl($event.target.result);
-		}
-
-		/*
-		 * Callback invoked when an img element has loaded.
-		 */
-		function imageLoaded($event) {
-			renderImage($event.target);
+			renderImage($event.target.result);
 		}
 
 		/**
-		 * Loads an image from a data URL into the editor.
-		 * @param {string} dataUrl An image encoded into a data url.
+		 * We're assuming that the image should not scale too small...
+		 * This should probably be a config parameter.
+		 * @param {number} availWidth The width of the canvas.
+		 * @param {number} availHeight The height of the canvas.
+		 * @param {number} imgWidth The raw image width.
+		 * @param {number} imgHeight The raw image height.
+		 * @returns {number} The minimum scale to keep this image from getting too small.
 		 */
-		function loadImageFromDataUrl(dataUrl) {
-			var imgObj = new Image();
-			imgObj.src = dataUrl;
-			imgObj.onload = imageLoaded;
+		function calcMinScale(availWidth, availHeight, imgWidth, imgHeight) {
+			var result, minScaleDefault = 0.1, minScaleX, minScaleY,
+				minWidth = availWidth * 0.7,
+				minHeight = availHeight * 0.7;
+			if (imgWidth > minWidth) {
+				minScaleX = minWidth / imgWidth;
+			}
+			else {
+				minScaleX = minScaleDefault;
+			}
+			if (imgHeight > minHeight) {
+				minScaleY = minHeight / imgHeight;
+			}
+			else {
+				minScaleY = minScaleDefault;
+			}
+			result = Math.max(minScaleX, minScaleY);
+			return result;
 		}
 
 		/*
 		 * Displays an img element in the image editor.
-		 * @param {Element} img An image element.
+		 * @param {Element|string} img An image element or a dataURL.
 		 */
-		function renderImage(img) {
-			var width = fbCanvas.getWidth(),
+		function renderImage(img, callback) {
+			var minScaleLimit = 0.1,
+				width = fbCanvas.getWidth(),
 				height = fbCanvas.getHeight(),
 				imageWidth, imageHeight;
-			fbImage = new fabric.Image(img);
-			fbImage.set({
-				angle: 0,
-				top: 0,
-				left: 0,
-				minScaleLimit: 0.1,
-				lockUniScaling: true,
-				centeredScaling: true,
-				centeredRotation: true
-			});
-			imageWidth = fbImage.getWidth();
-			imageHeight = fbImage.getHeight();
-			if (imageWidth > imageHeight) {
-				fbImage.scaleToWidth(width).setCoords();
+			try {
+				if (img.nodeType) {
+					renderFabricImage(new fabric.Image(img));
+				}
+				else {
+					fabric.Image.fromURL(img, renderFabricImage);
+				}
 			}
-			else {
-				fbImage.scaleToHeight(height).setCoords();
+			catch (ex) {
+				console.warn(ex);
 			}
-			stateStack.length = 0;
-			fbCanvas.clear();
-			fbCanvas.add(fbImage);
-			if (overlayUrl) {
-				fbCanvas.setOverlayImage(overlayUrl, positionOverlay);
+			function renderFabricImage(fabricImage) {
+				fbImage = fabricImage;
+				fabricImage.set({
+					angle: 0,
+					top: 0,
+					left: 0,
+					lockScalingFlip: true,
+					lockUniScaling: true,
+					centeredScaling: true,
+					centeredRotation: true
+				});
+				imageWidth = fabricImage.getWidth();
+				imageHeight = fabricImage.getHeight();
+				if (imageWidth > imageHeight) {
+					fabricImage.scaleToWidth(width).setCoords();
+				}
+				else {
+					fabricImage.scaleToHeight(height).setCoords();
+				}
+				fabricImage.width = imageWidth;
+				fabricImage.height = imageHeight;
+				minScaleLimit = calcMinScale(width, height, imageWidth, imageHeight);
+				fabricImage.minScaleLimit = minScaleLimit;
+				stateStack.length = 0;
+				fbCanvas.clear();
+				fbCanvas.add(fabricImage);
+				if (overlayUrl) {
+					fbCanvas.setOverlayImage(overlayUrl, positionOverlay);
+				}
+				else {
+					fbCanvas.renderAll();
+				}
+				fabricImage.saveState();
+				stateStack.push(JSON.stringify(fabricImage.originalState));
+				if (callback) {
+					callback();
+				}
 			}
-			else {
-				fbCanvas.renderAll();
-			}
-			fbImage.saveState();
-			stateStack.push(JSON.stringify(fbImage.originalState));
 		}
 
 		/**
@@ -287,21 +324,26 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 
 		/**
 		 * Builds the editor DOM and displays it to the user.
+		 * @param {Object} config Map of configuration properties.
 		 * @param {Object} callbacks An object with two callbacks: "win" and "lose".
 		 * @param {File} file The file being edited.
 		 * @returns {Promise} Resolved with the top level editor DOM element when it is ready.
 		 * @function
 		 * @private
 		 */
-		function getEditor(callbacks, file) {
-			frameConfig = frameConfig || getDialogFrameConfig();
+		function getEditor(config, callbacks, file) {
 			var promise = new Promise(function(resolve, reject) {
 				var container = document.body.appendChild(document.createElement("div"));
 				container.className = "wc_img_editor";
 
 				loader.load(TEMPLATE_NAME, true, true).then(function(template) {
-					var eventConfig, editorHtml, i18nProps = {
+					var eventConfig, editorHtml, editorProps = {
+							style: {
+								width: config.width || defaults.width,
+								height: config.height || defaults.height
+							},
 							heading: {
+								capture: "Capture",
 								rotate: i18n.get("${wc.ui.imageEdit.rotate}"),
 								move: i18n.get("${wc.ui.imageEdit.move}"),
 								zoom: i18n.get("${wc.ui.imageEdit.zoom}")
@@ -321,7 +363,8 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 								cancel: i18n.get("${wc.ui.imageEdit.action.cancel}"),
 								save: i18n.get("${wc.ui.imageEdit.action.save}"),
 								snap: i18n.get("${wc.ui.imageEdit.action.snap}"),
-								speed: i18n.get("${wc.ui.imageEdit.action.speed}")
+								camera: "Camera",
+								face: "Detect Face"
 							},
 							message: {
 								novideo: "Video stream not available.",
@@ -340,15 +383,14 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 								cancel: "Abort image editing",
 								save: "Save the image",
 								snap: "Take a snapshot from the video stream",
-								speed: "How quickly the buttons affect the image"
+								camera: "Take a photo from your webcam",
+								face: "Attempt to detect and center facial image"
 							},
-							value: {
-								speedNow: 1.5,
-								speedMin: 0.5,
-								speedMax: 5
+							feature: {
+								face: false
 							}
 						};
-					editorHtml = Mustache.to_html(template, i18nProps);
+					editorHtml = Mustache.to_html(template, editorProps);
 
 					container.innerHTML = editorHtml;
 					eventConfig = attachEventHandlers(container);
@@ -358,20 +400,22 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 					cancelControl(eventConfig, container, callbacks, file);
 					saveControl(eventConfig, container, callbacks, file);
 					rotationControls(eventConfig);
-					if (file) {
-						classList.add(container, "nocap");
-					}
-					else if (has("rtc-gum")) {
-						imageCapture.snapshotControl(eventConfig);
-					}
-					else {
-						classList.add(container, "cantplay");
+					// if (config.face) {
+					faceDetection.initControls(eventConfig, container);
+					// }
+					if (!file) {
+						classList.add(container, "wc_camenable");
+						classList.add(container, "wc_showcam");
+						imageCapture.snapshotControl(eventConfig, container);
 					}
 					resolve(container);
 				}, reject);
 			});
 
-			return Promise.all([promise, dialogFrame.open(frameConfig)]).then(function(values) {
+			return Promise.all([promise, dialogFrame.open(getDialogFrameConfig(function() {
+				imageCapture.stop();
+				callbacks.lose();
+			}))]).then(function(values) {
 				var dialogContent = dialogFrame.getContent(),
 					container = values[0];
 
@@ -391,7 +435,12 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 		 * @private`
 		 */
 		function attachEventHandlers(container) {
-			var timer, eventConfig = {
+			var timer,
+				MAX_SPEED = 10,
+				MIN_SPEED = 0.5,
+				START_SPEED = 1.5,
+				speed = START_SPEED,
+				eventConfig = {
 					press: {},
 					click: {}
 				};
@@ -404,31 +453,43 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 			event.add(container, "touchend", pressEnd);
 
 			function clickEvent($event) {
-				var config = getEventConfig($event.target, "click");
+				var element = $event.target,
+					config = getEventConfig(element, "click");
 				if (config) {
-					timers.clearTimeout(timer);
+					pressEnd();
 					timer = timers.setTimeout(config.func, 0, config);
 				}
 			}
 
 			function callbackWrapper(config) {
-				config.func(config);
-				timer = timers.setTimeout(callbackWrapper, 100, config);
+				config.func(config, speed);
+				// Speed up while the button is being held down
+				speed += (speed * 0.1);
+				if (speed < MIN_SPEED) {
+					speed = MIN_SPEED;
+				}
+				else if (speed > MAX_SPEED) {
+					speed = MAX_SPEED;
+				}
 			}
 
 			function pressStart($event) {
 				var config = getEventConfig($event.target, "press");
 				if (config) {
-					timer = timers.setTimeout(callbackWrapper, 100, config);
+					pressEnd();
+					timer = timers.setInterval(callbackWrapper, 100, config);
 				}
 			}
 
 			function pressEnd() {
-				timers.clearTimeout(timer);
+				speed = START_SPEED;
+				if (timer) {
+					timers.clearInterval(timer);
+				}
 			}
 
 			function getEventConfig(element, type) {
-				var name = element.className;
+				var name = element.name;
 				if (element.localName === "button" && name && eventConfig[type]) {
 					return eventConfig[type][name];
 				}
@@ -468,12 +529,11 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 		/*
 		 * Helper for features that change numeric properties of the image on the canvas.
 		 */
-		function numericProp(config) {
+		function numericProp(config, speed) {
 			var newValue,
 				currentValue,
 				getter = config.getter || ("get" + config.prop),
 				setter = config.setter || ("set" + config.prop),
-				speed = document.getElementById("wc_img_speed"),
 				step = config.step || 1; // do not allow step to be 0
 			if (fbImage) {
 				currentValue = fbImage[getter]();
@@ -481,10 +541,13 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 					newValue = rotateToStepHelper(currentValue, step);
 				}
 				else if (speed) {
-					newValue = currentValue + (step * speed.value);
+					newValue = currentValue + (step * speed);
 				}
 				else {
 					newValue = currentValue + step;
+				}
+				if (config.min) {
+					newValue = Math.max(config.min, newValue);
 				}
 				fbImage[setter](newValue);
 				fbCanvas.renderAll();
@@ -551,7 +614,8 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 				func: numericProp,
 				getter: "getScaleX",
 				setter: "scale",
-				step: -0.05
+				step: -0.05,
+				min: 0.1
 			};
 		}
 
@@ -626,8 +690,8 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 		 * @param {File} [file] The binary file being edited.
 		 */
 		function saveImage(editor, callbacks, cancel, file) {
-			var overlay, result, done = function() {
-					fbCanvas = fbImage = null;
+			var canvasElement, overlay, result, done = function() {
+					canvasElement = fbCanvas = fbImage = null;
 					imageCapture.stop();
 					editor.parentNode.removeChild(editor);
 				};
@@ -641,13 +705,15 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 					overlay = fbCanvas.overlayImage;
 					if (overlay) {
 						fbCanvas.overlayImage.visible = false;  // remove the overlay
+						fbCanvas.renderAll();
 					}
 					if (file && !hasChanged()) {
 						console.log("No changes made, using original file");
 						result = file;  // if the user has made no changes simply pass thru the original file.
 					}
 					else {
-						result = fbCanvas.toDataURL();
+						canvasElement = fbCanvas.getElement();
+						result = canvasElement.toDataURL();
 						result = dataURItoBlob(result);
 						result = blobToFile(result, file);
 					}
@@ -678,12 +744,17 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 		 * @returns {File} The image as a binary File.
 		 */
 		function imgToFile(element) {
-			var file, fbImageTemp, dataUrl, blob, config = {
+			var scale = 1,
+				canvas = document.createElement("canvas"),
+				context, file, dataUrl, blob, config = {
 					name: element.id
 				};
 			if (element && element.src) {
-				fbImageTemp = new fabric.Image(element);
-				dataUrl = fbImageTemp.toDataURL();
+				canvas.width = element.width * scale;
+				canvas.height = element.height * scale;
+				context = canvas.getContext("2d");
+				context.drawImage(element, 0, 0);
+				dataUrl = canvas.toDataURL("image/png");
 				blob = dataURItoBlob(dataUrl);
 				file = blobToFile(blob, config);
 			}
@@ -751,6 +822,86 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 		}
 
 		/**
+		 * Encapsulates the face detection functionality.
+		 *
+		 * @constructor
+		 */
+		function FaceDetection() {
+
+			this.initControls = function(eventConfig, container) {
+				require(["wc/ui/facetracking"], function(facetracking) {
+					eventConfig.click.face = {
+						func: function() {
+							var button = container.querySelector("[name='face']"),
+								done = function(msg) {
+									if (msg) {
+										console.log(msg);
+									}
+									if (button) {
+										shed.enable(button);
+									}
+								};
+							if (button) {
+								shed.disable(button);
+							}
+							facetracking.track(fbImage.getElement()).then(function(rect) {
+								if (rect) {
+									zoomFace(rect);
+								}
+								done();
+							}, done);
+						}
+					};
+				});
+			};
+
+			/**
+			 * Attempts to zoom in on a face in the image.
+			 * @param {Object} rect Coordinates of the face to zoom.
+			 */
+			function zoomFace(rect) {
+				var newLeft, newTop,
+					totalWidth = fbCanvas.getWidth(),
+					ZOOM_TO_PC = 0.8,
+					totalPadPc = Math.max(0, 1 - ZOOM_TO_PC),
+					totalPadPixels = totalWidth * totalPadPc,
+					targetWidthPixels = totalWidth * ZOOM_TO_PC,
+					targetScale = targetWidthPixels / rect.width;
+				fbImage.scale(targetScale);
+				fbImage.setAngle(0);  // TODO we should really rotate the image we pass to trackingjs
+				newLeft = (totalPadPixels / 2) - (rect.x * targetScale);
+				newTop = totalPadPixels - (rect.y * targetScale);  // The face is lower on the head so it probably needs more padding...
+				fbImage.setLeft(newLeft);
+				fbImage.setTop(newTop);
+				fbCanvas.renderAll();
+			};
+
+	//		function markFace(rect) {
+	//			var leftOffset = fbImage.getLeft(),
+	//				topOffset = fbImage.getTop(),
+	//				div = document.createElement("div"),
+	//				container = document.querySelector(".canvas-container");
+	//			div.style.position = "relative";
+	//			div.style.border = "1px lime dashed";
+	//			div.addEventListener("click", function() {
+	//				container.removeChild(div);
+	//			}, false);
+	//			div.style.width = rect.width + "px";
+	//			div.style.height = rect.height + "px";
+	//			div.style.top = (rect.y + topOffset) + "px";
+	//			div.style.left = (rect.x + leftOffset) + "px";
+	//			container.appendChild(div);
+	//
+	//			if (container) {
+	//				var divs = container.querySelectorAll("div");
+	//				for (var i = 0; i < divs.length; i++) {
+	//					divs[i].parentNode.removeChild(divs[i]);
+	//				}
+	//			}
+	//		}
+		}
+
+		/**
 		 * Encapsulates the image capture functionality.
 		 *
 		 * TODO allow user to select video source or rely on platform to provide this?
@@ -758,65 +909,124 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 		 * @constructor
 		 */
 		function ImageCapture() {
-			var _stream,
+			var VIDEO_CONTAINER = "wc_img_video_container",
+				context,
+				canvas,
+				image,
 				streaming,
-				VIDEO_ID = "wc_img_video";
+				_stream,
+				pos = 0,
+				currentOptions,
+				defaultOptions = {
+					video: true,  // { facingMode: "user" },
+					audio: false,
+					extern: null,
+					append: true,
+					context: "",
+					swffile: window.require.toUrl("lib/getusermedia-js/fallback/jscam_canvas_only.swf"),
+					el: VIDEO_CONTAINER,
+					mode: "callback",
+					quality: 85,
+					onCapture: onCapture,
+					onSave: onSave
+				};
 
 			has.add("rtc-gum", function() {
 				return (gumWrapper());
 			});
 
 			/*
+			 * Flash event handler
+			 */
+			function onCapture() {
+//				context = fbCanvas.getContext("2d");
+//				context.clearRect(0, 0, currentOptions.width, currentOptions.height);
+//				image = context.getImageData(0, 0, currentOptions.width, currentOptions.height);
+				canvas = document.createElement("canvas");
+				canvas.height = currentOptions.height;
+				canvas.width = currentOptions.width;
+				context = canvas.getContext("2d");
+				context.clearRect(0, 0, currentOptions.width, currentOptions.height);
+				image = context.getImageData(0, 0, currentOptions.width, currentOptions.height);
+				currentOptions.save();
+			}
+
+			/*
+			 * Flash event handler
+			 */
+			function onSave(data) {
+				var col = data.split(";"),
+					tmp = null,
+					width = currentOptions.width,
+					height = currentOptions.height;
+				for (var i = 0; i < width; i++) {
+					tmp = parseInt(col[i], 10);
+					image.data[pos + 0] = (tmp >> 16) & 0xff;
+					image.data[pos + 1] = (tmp >> 8) & 0xff;
+					image.data[pos + 2] = tmp & 0xff;
+					image.data[pos + 3] = 0xff;
+					pos += 4;
+				}
+
+				if (pos >= 4 * width * height) {
+					// fbCanvas.getContext("2d").putImageData(image, 0, 0);
+					context.putImageData(image, 0, 0);
+					renderImage(canvas.toDataURL());
+					pos = 0;
+				}
+			}
+
+			/*
 			 * Wires up the "take photo" feature.
 			 */
-			this.snapshotControl = function (eventConfig) {
-				var click = eventConfig.click;
-				if (has("rtc-gum")) {
-					click.snap = {
-						func: function() {
-							var dataUrl,
-								fbImageTemp,
-								video = document.getElementById(VIDEO_ID);
+			this.snapshotControl = function (eventConfig, container) {
+				var click = eventConfig.click,
+					done = function(_video) {
+						var video = _video || getVideo();
+						classList.remove(container, "wc_showcam");
+						imageCapture.stop();
+						video.parentNode.removeChild(video);
+					};
+				activateCameraControl(eventConfig, container);
+				click.snap = {
+					func: function() {
+						var video, img;
+						if (currentOptions.context === "webrtc") {
+							video = getVideo();
 							if (video) {
-								fbImageTemp = new fabric.Image(video);
-								dataUrl = fbImageTemp.toDataURL();
-								loadImageFromDataUrl(dataUrl);
+								video.pause();
+								img = videoToImage(video);
+								renderImage(img, done);
 							}
 						}
-					};
-				}
-			};
-
-			/**
-			 * Initialize the video element.
-			 * Provide the width and the video height will be scaled to fit.
-			 * @param {number} width The width used to scale the video.
-			 * @param {number} [_height] Not used under normal circumstances.
-			 */
-			this.initialize = function(width, _height) {
-				var video = document.getElementById(VIDEO_ID);
-				video.setAttribute("width", width);
-				streaming = false;
-				video.addEventListener("canplay", function() {
-					var height;
-					if (!streaming) {
-						height = video.videoHeight / (video.videoWidth / width);
-
-						// Firefox currently has a bug where the height can't be read from the video
-						if (isNaN(height)) {
-							height = width / (width / _height);
+						else if (currentOptions.context === "flash") {
+							currentOptions.capture();
+							classList.remove(container, "wc_showcam");
 						}
-
-						video.setAttribute("width", width);
-						video.setAttribute("height", height);
-
-						streaming = true;
+						else {
+							alert("No context was supplied to getSnapshot()");
+						}
 					}
-				}, false);
+				};
 			};
+
+			function activateCameraControl(eventConfig, container) {
+				var click = eventConfig.click;
+				click.camera = {
+					func: function() {
+						imageCapture.play({
+							width: fbCanvas.getWidth(),
+							height: fbCanvas.getHeight()
+						});
+						classList.add(container, "wc_showcam");
+					}
+				};
+			}
 
 			/*
 			 * Wraps the call to getUserMedia to hide the turmoil.
+			 * WARNING: call "gumWithFallback" instead - it will use native gum if found and fall back if necessary.
+			 *
 			 * Has the same signature and return as the native getUserMedia call EXCEPT if you call it with no args it's basically a feature test
 			 * and returns truthy if GUM is supported.
 			 */
@@ -840,17 +1050,49 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 				return false;
 			};
 
+			/*
+			 * Entry point to gum.
+			 * Uses native getUserMedia if possible and falls back to plugins if it must.
+			 */
+			function gumWithFallback(constraints, playCb, errCb) {
+				if (getUserMedia && arguments.length === 3) {
+					getUserMedia(constraints, playCb, errCb);
+				}
+			}
+
 			function playCb(stream) {
-				var vendorURL, video = document.getElementById(VIDEO_ID);
+				var video, vendorURL;
 				_stream = stream;
-				if (navigator.mozGetUserMedia) {
-					video.mozSrcObject = stream;
-				}
-				else {
+				if (currentOptions.context === "webrtc") {
+
+					video = currentOptions.videoEl;
 					vendorURL = window.URL || window.webkitURL;
-					video.src = vendorURL.createObjectURL(stream);
+					video.src = vendorURL ? vendorURL.createObjectURL(stream) : stream;
+
+					video.onerror = function () {
+						stream.getVideoTracks()[0].stop();
+						errCb(arguments[0]);
+					};
+
+					video.setAttribute("width", currentOptions.width);
+					streaming = false;
+					video.addEventListener("canplay", function() {
+						var height;
+						if (!streaming) {
+							height = video.videoHeight / (video.videoWidth / currentOptions.width);
+
+							// Firefox currently has a bug where the height can't be read from the video
+							if (isNaN(height)) {
+								height = currentOptions.width / (currentOptions.width / currentOptions.height);
+							}
+
+							video.setAttribute("width", currentOptions.width);
+							video.setAttribute("height", height);
+
+							streaming = true;
+						}
+					}, false);
 				}
-				video.play();
 			}
 
 			function errCb(err) {
@@ -860,9 +1102,9 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 			/**
 			 * Close the web camera video stream.
 			 */
-			this.stop = function() {
-				var i, track, tracks, video = document.getElementById(VIDEO_ID);
-				if (video) {
+			this.stop = function(pause) {
+				var i, track, tracks, video = getVideo();
+				if (video && !pause) {
 					video.src = "";
 				}
 				if (_stream) {
@@ -878,22 +1120,77 @@ function(has, event, uid, classList, timers, loader, i18n, fabric, Mustache, dia
 					else if (_stream.stop) {
 						_stream.stop();
 					}
-					_stream = null;
+					if (!pause) {
+						_stream = null;
+					}
 				}
 			};
 
 			/**
 			 * Start the web camera video stream.
+			 * Any options not provided will be set to default values.
+			 * Default values may be globally overridden by "wc/config" options.
+			 * Option values provided to this function call override default and global option values.
+			 *
+			 * In other words:
+			 * 1. Options passed in argument trump all.
+			 * 2. Options set in wc/config trump defaults.
+			 * 3. Option defaults will be used if not set in any other way.
+			 *
+			 * To understand the options take a look at: https://github.com/addyosmani/getUserMedia.js and/or https://github.com/infusion/jQuery-webcam
 			 */
-			this.play = function() {
-				var constraints = {
-					video: true,// { facingMode: "user" },
-					audio: false
-				};
-				if (has("rtc-gum")) {
-					gumWrapper(constraints, playCb, errCb);
+			this.play = function(options) {
+				var globalOptions, globalConf = wcconfig.get("wc/ui/imageEdit");
+				if (globalConf && globalConf.options) {
+					globalOptions = globalConf.options;
 				}
+				else {
+					globalOptions = {};
+				}
+				currentOptions = Object.assign({}, defaultOptions, globalOptions, options);
+				currentOptions.width *= 1;
+				currentOptions.height *= 1;
+				window.webcam = currentOptions;  // Needed for flash fallback
+				if (!has("rtc-gum") && currentOptions.swffile === defaultOptions.swffile && (currentOptions.width !== 320 || currentOptions.height !== 240)) {
+					/*
+					 * The default swffile can only support 320 x 240.
+					 * Compile new swf files at different resolutions if you need them: https://github.com/infusion/jQuery-webcam
+					 * You can then change the swffile location in the options using wc/config
+					 */
+					console.warn("The default flash fallback only supports 320 x 240");
+					currentOptions.width = 320;
+					currentOptions.height = 240;
+				}
+				gumWithFallback(currentOptions, playCb, errCb);
 			};
+
+			function videoToDataUrl(video, scale) {
+				var _scale = scale || 1,
+					canvas = document.createElement("canvas");
+				canvas.width = video.videoWidth * _scale;
+				canvas.height = video.videoHeight * _scale;
+				canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+				return canvas.toDataURL();
+			}
+
+			function videoToImage(video, scale) {
+				var dataUrl = videoToDataUrl(video, scale),
+					img = new Image();
+				img.src = dataUrl;
+				return img;
+			}
+
+			/**
+			 * Gets the video element.
+			 * @returns {Element} The video element.
+			 */
+			function getVideo() {
+				var container = document.getElementById(VIDEO_CONTAINER);
+				if (!container) {
+					return null;
+				}
+				return container.querySelector("video");
+			}
 		}
 	}
 	return imageEdit;

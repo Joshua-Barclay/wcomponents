@@ -1,20 +1,18 @@
 /* wc.debug.axs.scss */
 // CSS for the AXE/AXS output in debug mode
 
-@import 'mixins_common.scss';
+@import 'mixins-common';
 
 .wc_a11y {
 	@include border;
-	margin: $hgap-large;
+	@include margin($size: $wc-gap-large);
 
 	> a {
-		margin: 0 $hgap-small;
+		margin: 0 $wc-gap-small;
 	}
 
 	&.warning { // I have never seen a warning level issue in WComponents which has NOT been a false negative.
 		border-color: $wc-ui-color-warning-fg;
-		// max-height: 5em;
-		// overflow: auto;
 
 		&:before {
 			background-color: $wc-ui-color-warning-fg;
@@ -38,8 +36,8 @@
 			color: $std-color-white;
 			display: block;
 			font-weight: bold;
-			margin-bottom: $hgap-normal;
-			padding: $hgap-small;
+			margin-bottom: $wc-gap-normal;
+			padding: $wc-gap-small;
 			text-align: center;
 			width: 100%;
 		}

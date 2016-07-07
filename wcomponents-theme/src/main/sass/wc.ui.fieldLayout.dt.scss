@@ -1,0 +1,17 @@
+/* wc.ui.fieldLayout.dt.scss */
+@import 'fieldLayout-mixins';
+
+$wc-fld-list: 16, 33, 34, 66, 67, 83 !default;
+
+@include respond-not-small {
+	// @for $i from 1 through 100 {
+	// 	$wc-fld-lblw: $i * 1%;
+	@for $i from 1 through 20 {
+		$j: $i * 5;
+		@include wc-fld-layout($j);
+	}
+
+	@each $w in $wc-fld-list {
+		@include wc-fld-layout($w);
+	}
+}

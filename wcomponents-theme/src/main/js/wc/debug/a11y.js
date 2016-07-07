@@ -1,11 +1,19 @@
-define(["wc/ui/loading", "wc/dom/storage"], function(loading, storage) {
+define(["wc/has", "wc/ui/loading", "wc/dom/storage"], function(has, loading, storage) {
 	"use strict";
-	var AXE = storage.get("wc.a11y.AXE");  // set this to "true" to use axe-core
+	var DISABLE = storage.get("wc.a11y.DISABLE"),  // set this to "true" to disable a11y check
+		AXE = storage.get("wc.a11y.AXE");  // set this to "true" to use axe-core
 
 	loading.done.then(window.setTimeout(function() {
-		// kick this off after a few seconds so that RequireJS has (hopefully) finished loading modules
-		console.log("Pending a11y check in 3 seconds");
-		a11yTest();
+		if (DISABLE !== "true") {
+			if (!has("ie")) {
+				// kick this off after a few seconds so that RequireJS has (hopefully) finished loading modules
+				console.log("Pending a11y check in 3 seconds");
+				a11yTest();
+			}
+		}
+		else {
+			console.log("a11y check disabled via stored property `wc.a11y.DISABLE`");
+		}
 	}, 3000));
 
 	/**
@@ -59,7 +67,7 @@ define(["wc/ui/loading", "wc/dom/storage"], function(loading, storage) {
 			 * Skip "focusableElementNotVisibleAndNotAriaHidden" because it sets focus and that could be annoying.
 			 */
 			auditConfig.auditRulesToIgnore = ["focusableElementNotVisibleAndNotAriaHidden"];
-			auditConfig.ignoreSelectors('elementsWithMeaningfulBackgroundImage', '[title]'); // this is an error in the testing tool
+			auditConfig.ignoreSelectors("elementsWithMeaningfulBackgroundImage", "[title]"); // this is an error in the testing tool
 
 			issues = axs.Audit.run(auditConfig);
 			issues.forEach(function(issue) {

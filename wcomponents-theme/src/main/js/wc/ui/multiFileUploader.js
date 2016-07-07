@@ -3,6 +3,7 @@
  *
  * @module
  * @requires module:wc/dom/attribute
+ * @requires module:wc/loader/prefetch
  * @requires module:wc/dom/event
  * @requires module:wc/dom/initialise
  * @requires module:wc/dom/uid
@@ -25,6 +26,7 @@
  *
  */
 define(["wc/dom/attribute",
+		"wc/loader/prefetch",
 		"wc/dom/event",
 		"wc/dom/initialise",
 		"wc/dom/uid",
@@ -44,19 +46,18 @@ define(["wc/dom/attribute",
 		"wc/dom/focus",
 		"wc/isNumeric",
 		"wc/ui/ajaxRegion"],
-	/** @param attribute wc/dom/attribute @param event wc/dom/event @param initialise wc/dom/initialise @param uid wc/dom/uid @param Trigger wc/ajax/Trigger @param classList wc/dom/classList @param sprintf lib/sprintf @param has wc/has @param i18n wc/i18n/i18n @param getFileSize wc/file/getFileSize @param accepted wc/file/accepted @param Widget wc/dom/Widget @param formUpdateManager wc/file/formUpdateManager @param filedrop wc/file/filedrop @param ajax wc/ajax/ajax @param xslTransform wc/xml/xslTransform @param timers wc/timers @param focus wc/dom/focus @param isNumeric wc/isNumeric @param ajaxRegion wc/ui/ajaxRegion @ignore */
-	function(attribute, event, initialise, uid, Trigger, classList, sprintf, has, i18n, getFileSize,
+	function(attribute, prefetch, event, initialise, uid, Trigger, classList, sprintf, has, i18n, getFileSize,
 			accepted, Widget, formUpdateManager, filedrop, ajax, xslTransform, timers, focus, isNumeric, ajaxRegion) {
 		"use strict";
 
 		var /** @alias module:wc/ui/multiFileUploader */ instance = new MultiFileUploader(),
-			CLASS_NAME = "fileUpload",
+			CLASS_NAME = "wc-fileupload",
 			AJAX_ATTR = "data-wc-ajaxalias",
 			COL_ATTR = "data-wc-cols",
 			MAX_FILES_ATTR = "data-wc-maxfiles",
 			CLASS_NO_BULLET = "wc_list_nb",
 			CLASS_WRAPPER = "wc_files",
-			CLASS_FILE_INFO = "file",
+			CLASS_FILE_INFO = "wc-file",
 			CLASS_FILE_LIST = "wc_filelist",
 			messageTimer,
 			containerWd = new Widget("", CLASS_NAME),
@@ -106,6 +107,8 @@ define(["wc/dom/attribute",
 				MB = Math.pow(10, 6),
 				GB = Math.pow(10, 9);
 
+			prefetch.jsModule("wc/ui/imageEdit");
+
 			/**
 			 * Change event on the file input.
 			 * Somebody wants to upload a file...
@@ -126,7 +129,7 @@ define(["wc/dom/attribute",
 			 */
 			function filesChanged(id) {
 				var element = document.getElementById(id);
-				if (element) {
+				if (element && element.getAttribute(AJAX_ATTR)) {
 					ajaxRegion.requestLoad(element);
 				}
 			}
@@ -279,7 +282,7 @@ define(["wc/dom/attribute",
 					filesToAdd = (testObj.files ? testObj.files.length : 1);
 					maxFileInfo = checkMaxFiles(element, filesToAdd);
 					if (maxFileInfo.valid) {
-						editorId = element.getAttribute("data-editor");
+						editorId = element.getAttribute("data-wc-editor");
 						if (!suppressEdit && editorId) {
 							require(["wc/ui/imageEdit"], function(imageEdit) {
 								testObj.editorId = editorId;
@@ -499,14 +502,14 @@ define(["wc/dom/attribute",
 					oldFile = document.getElementById(fileId);
 				delete inflightXhrs[fileId];
 				if (oldFile) {
-					containerId = newFile.getAttribute("data-containerid");
+					containerId = newFile.getAttribute("data-wc-containerid");
 					if (containerId) {
 						resetAjaxAttribOnActivationLink(newFile, containerId);
 					}
 					oldFile.innerHTML = newFile.innerHTML;
 					// oldFile.parentNode.replaceChild(newFile, oldFile);  // Problems with importing node
 				}
-				else if ((containerId = newFile.getAttribute("data-containerid")) && (container = document.getElementById(containerId))) {
+				else if ((containerId = newFile.getAttribute("data-wc-containerid")) && (container = document.getElementById(containerId))) {
 					resetAjaxAttribOnActivationLink(newFile, containerId);
 					// This is an extreme edge case - if the fileWidget UI has been replaced during upload attempt to recover
 					container.insertAdjacentHTML("beforeend", newFile.outerHTML);

@@ -35,15 +35,16 @@
 			</xsl:when>
 			<xsl:otherwise>
 				<xsl:variable name="elementType">
-					<xsl:call-template name="WStyledTextGetElementFromType"/>
+					<xsl:call-template name="WStyledTextGetElementFromType">
+						<xsl:with-param name="type" select="$type"/>
+					</xsl:call-template>
 				</xsl:variable>
 				<xsl:element name="{$elementType}">
-					<xsl:attribute name="class">
-						<xsl:value-of select="$class"/>
-						<xsl:if test="$type !=''">
-							<xsl:value-of select="concat(' ', $type)"/>
-						</xsl:if>
-					</xsl:attribute>
+					<xsl:call-template name="makeCommonClass">
+						<xsl:with-param name="additional">
+							<xsl:value-of select="@type"/>
+						</xsl:with-param>
+					</xsl:call-template>
 					<xsl:apply-templates />
 				</xsl:element>
 			</xsl:otherwise>

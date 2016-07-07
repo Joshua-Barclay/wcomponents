@@ -1,10 +1,10 @@
 /* wc.ui.definitionList.scss */
-@import 'mixins_common.scss';
+@import 'mixins-common';
 
 // NOTE: the dl element is required here to differentiate from WFieldLayout with the same classNames generated from
 // LAYOUT attribute in XML
 dl {
-	margin: 0;
+	@include margin($size: 0);
 
 	//type flat
 	&.flat {
@@ -20,11 +20,11 @@ dl {
 		}
 
 		> dt ~ dt { // any dt with a preceding sibling gets margin-left
-			margin-left: $hgap-normal;
+			margin-left: $wc-gap-normal;
 		}
 
 		> dd { // all dds must have a preceding sibling so they all get margin-left
-			margin-left: $hgap-small;
+			margin-left: $wc-gap-small;
 		}
 	}
 }
@@ -53,10 +53,12 @@ dt {
 		vertical-align: text-top;
 		width: 69.5%;
 	}
+}
 
-	> dt,
-	> dd {
-		@include respond(phonelike) {
+@include respond-phonelike {
+	.column {
+		> dt,
+		> dd {
 			@include border-box;
 			display: block;
 			margin-left: 0;
@@ -75,4 +77,3 @@ dt {
 		padding-left: 0;
 	}
 }
-/* end wc.ui.definitionList.scss */

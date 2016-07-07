@@ -27,7 +27,7 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * <p>
- * AbstractWComponent is the parent class of all standard WComponents
+ * AbstractWComponent is the parent class of all standard WComponents.
  * </p>
  * <p>
  * WComponent trees (UIs) are intended to be shared between sessions in order to reduce their memory footprint. To
@@ -374,10 +374,8 @@ public abstract class AbstractWComponent implements WComponent {
 	}
 
 	/**
-	 * Clear the ID register.
-	 * <p>
-	 * Usually called when a naming context is being painted. This allows the IDs to be refreshed.
-	 * </p>
+	 * Clear the ID register. Usually called when a naming context is being painted. This allows the IDs to be
+	 * refreshed.
 	 */
 	void clearIdRegister() {
 		ComponentModel model = getOrCreateComponentModel();
@@ -394,7 +392,7 @@ public abstract class AbstractWComponent implements WComponent {
 	 * This method will return <code>null</code> if called outside of request processing.
 	 * </p>
 	 *
-	 * @return a map which can be used to temporarily cache data, or null.
+	 * @return a map which can be used to temporarily cache data, or null
 	 */
 	protected Map getScratchMap() {
 		UIContext uic = UIContextHolder.getCurrent();
@@ -506,7 +504,9 @@ public abstract class AbstractWComponent implements WComponent {
 	 * Associates a Velocity template with this component by supplying a resource url.
 	 *
 	 * @param templateUrl the location of the velocity template resource.
+	 * @deprecated Use {@link WTemplate} instead
 	 */
+	@Deprecated
 	void setTemplate(final String templateUrl) {
 		getOrCreateComponentModel().setTemplateUrl(templateUrl);
 	}
@@ -515,7 +515,9 @@ public abstract class AbstractWComponent implements WComponent {
 	 * Directly associates Velocity mark-up with this component. The mark-up will be used for rendering.
 	 *
 	 * @param markUp Velocity mark-up.
+	 * @deprecated Use {@link WTemplate} instead
 	 */
+	@Deprecated
 	void setTemplateMarkUp(final String markUp) {
 		getOrCreateComponentModel().setTemplateMarkUp(markUp);
 	}
@@ -524,7 +526,9 @@ public abstract class AbstractWComponent implements WComponent {
 	 * Retrieves Velocity mark-up which has been explicitly associated with this component.
 	 *
 	 * @return the Velocity mark-up, or null if no mark-up has been set explicitly.
+	 * @deprecated Use {@link WTemplate} instead
 	 */
+	@Deprecated
 	public String getTemplateMarkUp() {
 		return getComponentModel().getTemplateMarkUp();
 	}
@@ -533,7 +537,9 @@ public abstract class AbstractWComponent implements WComponent {
 	 * Retrieves the resource url of the Velocity template associated with this component.
 	 *
 	 * @return the location of the Velocity template resource, or null if there is no template.
+	 * @deprecated Use {@link WTemplate} instead
 	 */
+	@Deprecated
 	public String getTemplate() {
 		return getComponentModel().getTemplateUrl();
 	}
@@ -547,7 +553,7 @@ public abstract class AbstractWComponent implements WComponent {
 	 * </p>
 	 *
 	 * @param clazz the class to use to retrieve the template.
-	 * @deprecated use {@link #setTemplate(String)}.
+	 * @deprecated Use {@link WTemplate} instead
 	 */
 	@Deprecated
 	void setTemplate(final Class clazz) {
@@ -921,12 +927,12 @@ public abstract class AbstractWComponent implements WComponent {
 	/**
 	 * <p>
 	 * Sets the client visibility of this component. Hidden components take part in event handling and painting, but are
-	 * not visible on the client.
+	 * not <a href="https://html.spec.whatwg.org/multipage/dom.html#palpable-content-2">palpable</a> on the client.
 	 * <p>
 	 *
 	 * @param hidden true for hidden, false for displayed.
 	 */
-	void setHidden(final boolean hidden) {
+	public void setHidden(final boolean hidden) {
 		setFlag(ComponentModel.HIDE_FLAG, hidden);
 	}
 
@@ -1028,7 +1034,6 @@ public abstract class AbstractWComponent implements WComponent {
 	 */
 	@Override
 	public int getTabIndex() {
-		// TODO figure out how this works
 		return 0;
 	}
 
@@ -1385,7 +1390,9 @@ public abstract class AbstractWComponent implements WComponent {
 	 *
 	 * @param component the component to add.
 	 * @param tag the tag used to identify the component.
+	 * @deprecated Use {@link WTemplate} instead.
 	 */
+	@Deprecated
 	void add(final WComponent component, final String tag) {
 		add(component);
 		component.setTag(tag);
@@ -1508,7 +1515,10 @@ public abstract class AbstractWComponent implements WComponent {
 	// ----------------------------
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @deprecated Use {@link WTemplate} instead
 	 */
+	@Deprecated
 	@Override
 	public String getTag() {
 		ComponentModel model = getComponentModel();
@@ -1517,7 +1527,10 @@ public abstract class AbstractWComponent implements WComponent {
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @deprecated Use {@link WTemplate} instead
 	 */
+	@Deprecated
 	@Override
 	public void setTag(final String tag) {
 		ComponentModel model = getOrCreateComponentModel();
@@ -1623,6 +1636,7 @@ public abstract class AbstractWComponent implements WComponent {
 
 	/**
 	 * {@inheritDoc}
+	 *
 	 * @deprecated use setToolTip
 	 */
 	@Override
@@ -1633,6 +1647,7 @@ public abstract class AbstractWComponent implements WComponent {
 
 	/**
 	 * {@inheritDoc}
+	 *
 	 * @deprecated use getToolTip
 	 */
 	@Override
@@ -1662,7 +1677,7 @@ public abstract class AbstractWComponent implements WComponent {
 	// ================================
 	// Debugging
 	/**
-	 * Creates a String representation of this component, for debugging purposes.
+	 * Creates a String representation of this component; usually for debugging purposes.
 	 *
 	 * @return a String representation of this component.
 	 */
@@ -1684,10 +1699,10 @@ public abstract class AbstractWComponent implements WComponent {
 	/**
 	 * Creates a String representation of this component, for debugging purposes.
 	 *
-	 * @param details some additional details to display in the output.
-	 * @param childStartIndex the start index of children to include in the output.
-	 * @param childEndIndex the end index of children to include in the output.
-	 * @return a String representation of this component.
+	 * @param details some additional details to display in the output
+	 * @param childStartIndex the start index of children to include in the output
+	 * @param childEndIndex the end index of children to include in the output
+	 * @return a String representation of this component
 	 */
 	final String toString(final String details, final int childStartIndex, final int childEndIndex) {
 		// The simple class name will be empty for anonymous subclasses,

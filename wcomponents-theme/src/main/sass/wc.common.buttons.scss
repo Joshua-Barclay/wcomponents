@@ -1,9 +1,8 @@
 /* wc.common.buttons.scss */
-
 // Buttons are not artifacts of any particular WComponent but are output by XSLT for any WComponent which requires
 // client side action other than navigation.
 
-// RULE OF THUMB: links are for navigation, buttons are for action.
+// RULE: links are for navigation, buttons are for action.
 
 // We use button of type submit rather than input of type submit to create form submission controls. This is to divorce
 // value from the visible text but is also more convenient for styling.
@@ -18,45 +17,46 @@
 
 // Having a button which is styled to emulate a link is to provide UI consistency in areas where buttons and links are
 // mixed. It may be more appropriate to not have a button which disguises itself as a link but to use the noStyle
- //variant.
-@import 'vars_all.scss';
+// variant.
+@import 'mixins-common';
+@import 'btn_common';
 
+/// User agent button styles are the bane of our lives. The _main_ problem is hard coded font styles rather than
+/// allowing them to inherit.
 button {
-	font-family: inherit;
-	font-size: inherit;
-	line-height: inherit;
-	margin: 0;
+	@include margin($size: 0);
+	// Uncomment the following to inherit text styles. This will improve consistency across platforms.
+	// If you add this you can remove the specific rule for ec_btn_link & wc_btn_nada below.
+	// @extend %button-like-text;
 }
 
-// CLASS wc_btn_nada has all style stripped. CLASS wc_btn_link is made to look like a link.
-.wc_btn {
-	&_link,
-	&_nada {
-		background-color: transparent;
-		border: 0 none;
-		cursor: pointer;
-		padding: 0;
-		text-align: inherit;
+@import 'btn-nada';
+@import 'btn-link';
+@import 'btn-icon';
 
-		&[disabled] {
-			color: $wc-ui-color-disabled-fg;
-		}
-	}
-
-	&_nada {
-		color: inherit;
-	}
-
-	&_link {
-		color: $wc-ui-color-link;
-		text-decoration: underline;
-
-		&.wc_btn_img {
-			text-decoration: none;
-		}
-	}
+.wc_btn_link,
+.wc_btn_nada {
+	@extend %button-like-text;
 }
 
+// A button stripped of its button nature.
+.wc_btn_nada {
+	@extend %wc_btn_nada;
+}
+
+// A button disguised as a link. These will normally also have the class wc_btn_nada.
+.wc_btn_link {
+	@extend %wc_btn_link;
+}
+
+// A common class for buttons which only contain icons.
+.wc_btn_icon {
+	@extend %wc_btn_icon;
+}
+
+
+/// Components which are not button elements but act as buttons. This is _very_ rare and is currently limited to
+/// summary elements in browsers which do not provide native details/summary behaviour.
 [role='button'] {
 	cursor: pointer;
 

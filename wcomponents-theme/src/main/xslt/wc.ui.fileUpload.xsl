@@ -15,7 +15,7 @@
 		wrapped in a container with the component ID. The compound control consists of
 		the file input and the list of files.
 	-->
-	<xsl:template match="ui:fileUpload">
+	<xsl:template match="ui:fileupload">
 		<xsl:variable name="id" select="@id"/>
 		<xsl:variable name="isError" select="key('errorKey',$id)"/>
 		<xsl:variable name="readOnly">
@@ -28,7 +28,6 @@
 				<xsl:number value="1"/>
 			</xsl:if>
 		</xsl:variable>
-		<xsl:variable name="maxFiles" select="@maxFiles"/>
 		<xsl:variable name="myLabel" select="key('labelKey',$id)[1]"/>
 
 		<xsl:variable name="cols">
@@ -83,16 +82,10 @@
 							<xsl:with-param name="myLabel" select="$myLabel"/>
 						</xsl:call-template>
 
-						<xsl:variable name="inputId" select="concat($id,generate-id())"/>
-						<xsl:element name="label">
-							<xsl:attribute name="class">
-								<xsl:text>wc_off</xsl:text>
-							</xsl:attribute>
-							<xsl:attribute name="for">
-								<xsl:value-of select="$inputId"/>
-							</xsl:attribute>
+						<xsl:variable name="inputId" select="concat($id,'_input')"/>
+						<label class="wc_off" for="{$inputId}">
 							<xsl:value-of select="$$${wc.ui.multiFileUploader.i18n.inputLabel}"/>
-						</xsl:element>
+						</label>
 						<xsl:call-template name="fileInput">
 							<xsl:with-param name="id" select="$inputId"/>
 						</xsl:call-template>
@@ -123,7 +116,7 @@
 							<xsl:otherwise>
 								<ul>
 									<xsl:attribute name="class">
-										<xsl:text>wc_filelist wc_list_nb</xsl:text>
+										<xsl:text>wwc_list_nb wc_filelist</xsl:text>
 										<xsl:if test="$cols = 0">
 											<xsl:text> wc_list_flat</xsl:text>
 										</xsl:if>

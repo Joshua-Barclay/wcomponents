@@ -9,27 +9,27 @@
 		A dateField is a compound control consisting of a text input and a button used
 		to launch a date picker calendar. The text input allows for typeahead to
 		select a date as the user types and for the following shortcuts:
-		
+
 			* t = today
 			* y = yesterday
 			* m = tomorrow
 			* [+|-][1-9][0-9]\* increment/decrement today's date by the number of days
-		
+
 		We do not implement HTML input element types for dates (date, dateTime
 		etc) as their implementation is patchy and no current browser does a good
 		enough job on the date pickers. In addition the date format enforced in the
 		HTML5 date inputs is (whilst eminently reasonable and unambiguous) not one
 		which is commonly used by real people.
-		
+
 		The picker calendar is built in JavaScript based on an XML template. It is not
 		transformed here. A single calendar is used for every dateField in a form by
 		attachment.
-		
+
 	-->
-	<xsl:template match="ui:dateField">
+	<xsl:template match="ui:datefield">
 		<xsl:variable name="id" select="@id"/>
 		<xsl:variable name="pickId">
-			<xsl:value-of select="concat('${wc.ui.dateField.id.prefix.picker}', $id)"/>
+			<xsl:value-of select="concat($id, '_cal')"/>
 		</xsl:variable>
 		<xsl:variable name="isError" select="key('errorKey',$id)"/>
 		<xsl:variable name="myLabel" select="key('labelKey',$id)[1]"/>
@@ -46,11 +46,11 @@
 					</xsl:choose>
 				</xsl:variable>
 				<xsl:element name="{$tagName}">
-					<xsl:call-template name="commonAttributes"/>
-					<xsl:attribute name="class">
-						<xsl:call-template name="commonClassHelper"/>
-						<xsl:text> wc_datero wc_ro</xsl:text>
-					</xsl:attribute>
+					<xsl:call-template name="commonAttributes">
+						<xsl:with-param name="class">
+							<xsl:text> wc_datero wc_ro</xsl:text>
+						</xsl:with-param>
+					</xsl:call-template>
 					<xsl:if test="$myLabel">
 						<xsl:attribute name="aria-labelledby">
 							<xsl:value-of select="$myLabel/@id"/>
@@ -80,7 +80,7 @@
 			</xsl:when>
 			<xsl:otherwise>
 				<xsl:variable name="inputId">
-					<xsl:value-of select="concat($id,'${wc.ui.dateField.id.input.suffix}')"/>
+					<xsl:value-of select="concat($id,'_input')"/>
 				</xsl:variable>
 				<xsl:if test="not($myLabel)">
 					<xsl:call-template name="checkLabel">
@@ -89,11 +89,34 @@
 					</xsl:call-template>
 				</xsl:if>
 				<!-- NOTE:
-					it would be nice to use a span for wrapping a date control which really is just an input and a button. 
+					it would be nice to use a span for wrapping a date control which really is just an input and a button.
 					The suggestion list used in WComponents is, however, a ul so the wrapper for date fields is a div by
 					necessity which changes its content type to non-phrase.
 				-->
 				<div id="{$id}">
+					<xsl:call-template name="makeCommonClass">
+						<xsl:with-param name="additional">
+							<xsl:text>wc_input_wrapper</xsl:text>
+						</xsl:with-param>
+					</xsl:call-template>
+					<xsl:attribute name="role">
+						<xsl:text>combobox</xsl:text>
+					</xsl:attribute>
+					<xsl:attribute name="aria-autocomplete">
+						<xsl:text>both</xsl:text>
+					</xsl:attribute>
+					<xsl:attribute name="aria-expanded">
+						<xsl:text>false</xsl:text>
+					</xsl:attribute>
+					<xsl:attribute name="data-wc-name">
+						<xsl:value-of select="@id"/>
+						<xsl:text>-date</xsl:text>
+					</xsl:attribute>
+					<xsl:if test="@date">
+						<xsl:attribute name="data-wc-value">
+							<xsl:value-of select="@date"/>
+						</xsl:attribute>
+					</xsl:if>
 					<xsl:call-template name="hideElementIfHiddenSet"/>
 					<xsl:call-template name="ajaxTarget">
 						<xsl:with-param name="live" select="'off'"/>
@@ -101,31 +124,11 @@
 					<xsl:call-template name="disabledElement">
 						<xsl:with-param name="isControl" select="0"/>
 					</xsl:call-template>
-					<xsl:call-template name="makeCommonClass"/>
-					<xsl:attribute name="role">
-						<xsl:text>combobox</xsl:text>
-					</xsl:attribute>
 					<xsl:call-template name="requiredElement">
 						<xsl:with-param name="useNative" select="0"/>
 					</xsl:call-template>
-					<xsl:attribute name="aria-autocomplete">
-						<xsl:text>both</xsl:text>
-					</xsl:attribute>
-					<xsl:call-template name="disabledElement"/>
-					<xsl:attribute name="aria-expanded">
-						<xsl:text>false</xsl:text>
-					</xsl:attribute>
 					<xsl:if test="$isError">
 						<xsl:call-template name="invalid"/>
-					</xsl:if>
-					<xsl:attribute name="data-wc-name">
-						<xsl:value-of select="@id"/>
-						<xsl:text>${wc.ui.dateField.name.suffix}</xsl:text>
-					</xsl:attribute>
-					<xsl:if test="@date">
-						<xsl:attribute name="data-wc-value">
-							<xsl:value-of select="@date"/>
-						</xsl:attribute>
 					</xsl:if>
 					<xsl:if test="not($myLabel)">
 						<xsl:call-template name="ariaLabel"/>
@@ -161,9 +164,6 @@
 						<xsl:attribute name="aria-owns">
 							<xsl:value-of select="$pickId"/>
 						</xsl:attribute>
-						<xsl:call-template name="title">
-							<xsl:with-param name="contentAfter" select="$$${wc.ui.dateField.i18n.title.default}"/>
-						</xsl:call-template>
 
 						<xsl:if test="@min">
 							<xsl:choose>
@@ -198,52 +198,29 @@
 								<xsl:value-of select="$$${wc.common.i18n.requiredPlaceholder}"/>
 							</xsl:attribute>
 						</xsl:if>
+						<xsl:call-template name="title">
+							<xsl:with-param name="contentAfter" select="$$${wc.ui.dateField.i18n.title.default}"/>
+						</xsl:call-template>
 						<xsl:call-template name="ajaxController"/>
 						<xsl:call-template name="disabledElement">
 							<xsl:with-param name="isControl" select="1"/>
 						</xsl:call-template>
 					</xsl:element>
-					<!-- This is the date picker launch control element. -->
-					<xsl:element name="button">
-						<xsl:attribute name="value">
-							<xsl:value-of select="$inputId"/>
-						</xsl:attribute>
-						<xsl:attribute name="tabindex">
-							<xsl:text>-1</xsl:text>
-						</xsl:attribute>
-						<!--
-							Calendar needs an ID so that if the date input itself is the target of an AJAX
-							"replace" the calendar icon will get cleaned up by our duplicate ID prevention
-							logic (assumes the new date field has the same ID which in WComponents is always the case).
+					<!-- This is the date picker launch control element.
+
+						Calendar needs an ID so that if the date input itself is the target of an AJAX
+						"replace" the calendar icon will get cleaned up by our duplicate ID prevention
+						logic (assumes the new date field has the same ID which in WComponents is always the case).
 						-->
-						<xsl:attribute name="id">
-							<xsl:value-of select="$pickId"/>
-						</xsl:attribute>
-						<xsl:attribute name="type">
-							<xsl:text>button</xsl:text>
-						</xsl:attribute>
-						<xsl:attribute name="aria-haspopup">
-							<xsl:copy-of select="$t"/>
-						</xsl:attribute>
-						<xsl:attribute name="class">
-							<xsl:text>wc_wdf_cal wc_btn_nada</xsl:text>
-						</xsl:attribute>
-						<xsl:call-template name="hideElementIfHiddenSet"/>
+					<button value="{$inputId}" tabindex="-1" id="{$pickId}" type="button" aria-haspopup="true" class="wc_wdf_cal wc_btn_icon wc_invite">
 						<xsl:call-template name="disabledElement">
 							<xsl:with-param name="isControl" select="1"/>
 						</xsl:call-template>
 						<xsl:attribute name="title">
 							<xsl:value-of select="$$${wc.ui.dateField.i18n.calendarLaunchButton}"/>
 						</xsl:attribute>
-					</xsl:element>
-					<xsl:element name="ul">
-						<xsl:attribute name="role">
-							<xsl:text>listbox</xsl:text>
-						</xsl:attribute>
-						<xsl:element name="li"><!-- a listbox must contain an option -->
-							<xsl:attribute name="role">option</xsl:attribute>
-						</xsl:element>
-					</xsl:element>
+					</button>
+					<ul role="listbox" aria-busy="true"></ul>
 				</div>
 				<xsl:call-template name="inlineError">
 					<xsl:with-param name="errors" select="$isError"/>

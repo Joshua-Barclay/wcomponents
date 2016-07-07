@@ -36,7 +36,7 @@ final class WMultiSelectPairRenderer extends AbstractWebXmlRenderer {
 		int min = multiSelectPair.getMinSelect();
 		int max = multiSelectPair.getMaxSelect();
 
-		xml.appendTagOpen("ui:multiSelectPair");
+		xml.appendTagOpen("ui:multiselectpair");
 		xml.appendAttribute("id", component.getId());
 		xml.appendOptionalAttribute("class", component.getHtmlClass());
 		xml.appendOptionalAttribute("track", component.isTracking(), "true");
@@ -68,11 +68,12 @@ final class WMultiSelectPairRenderer extends AbstractWebXmlRenderer {
 			}
 		}
 
-		xml.appendEndTag("ui:multiSelectPair");
+		xml.appendEndTag("ui:multiselectpair");
 	}
 
 	/**
-	 * Renders the options in selection order.
+	 * Renders the options in selection order. Note, though, that this does not support the legacy allowNull or
+	 * setSelected using String representations.
 	 *
 	 * @param multiSelectPair the WMultiSelectPair to paint.
 	 * @param options the options to render
@@ -82,8 +83,6 @@ final class WMultiSelectPairRenderer extends AbstractWebXmlRenderer {
 	 * @param encode true if the option description should be encoded, false if not.
 	 *
 	 * @return the number of options painted.
-	 *
-	 * TODO: This does not support the legacy allowNull or setSelected using String representations.
 	 */
 	private int renderOrderedOptions(final WMultiSelectPair multiSelectPair, final List<?> options,
 			final int startIndex, final XmlStringBuilder xml,

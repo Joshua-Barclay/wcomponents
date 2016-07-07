@@ -5,23 +5,59 @@
 // Next time you decide to delete all of the debug Sass and stop building it:
 // ### **DON'T** ###
 // Really, just don't otherwise you will have to put some of it back again and that is a PITA.
-@import 'mixins_common.scss';
+@import 'mixins-common';
 
-// next used only in debug mode
-$wc-ui-color-debug-fg: $std-color-primary;
+$wc-ui-color-debug-fg: $std-color-primary !default;
 
-// body element required to differentiate from other elements in a debug state or type
+body {
+	&::before { // I no longer care about IE8.
+		background-color: $wc-ui-color-highlight-bg;
+		color: $wc-ui-color-highlight-fg;
+		content: 'Client debug/diagnostic mode: document has ' attr(data-wc-nodeCount) ' elements.';
+		display: block;
+		padding: $wc-gap-normal;
+	}
+
+	&.wc_loggedwarn {
+		background-color: $wc-ui-color-warning-fg;
+	}
+
+	&.wc_loggederror { //the error style MUST TRUMP the warn style
+		background-color: $wc-ui-color-error-fg;
+	}
+}
+
 // scss-lint:disable QualifyingElement
-body.wc_debug:before {
-	background-color: $wc-ui-color-highlight-bg;
-	color: $wc-ui-color-highlight-fg;
-	content: 'Client debug/diagnostic mode is on.';
-	display: block;
-	padding: 0.5em;
+// Some elements should not exist but devs persist in using them. These have been removed using a null transform but
+// this may not remove any which are injected in a way which will avoid the XSLT (such as by a custom script) so we keep
+// this CSS.
+applet,
+acronym,
+bgsound,
+dir,
+frame,
+frameset,
+noframes,
+isindex,
+listing,
+nextid,
+noembed,
+plaintext,
+rb,
+strike,
+xmp,
+basefont,
+big,
+blink,
+center,
+font,
+marquee,
+multicol,
+nobr,
+spacer,
+tt,
+img[border='0'],
+a[name],
+input[type='number'][maxlength] {
+	@include outline($color: $wc-ui-color-error-fg);
 }
-
-// The attribute inclusion here doesn't work in IE8 so there is no point including it in the :before
-body.wc_debug::before {
-	content: 'Client debug/diagnostic mode: document has ' attr(data-wc-nodeCount) ' elements.';
-}
-// scss-lint:enable QualifyingElement

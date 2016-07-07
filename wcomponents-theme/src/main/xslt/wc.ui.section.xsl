@@ -8,7 +8,7 @@
 		
 		Child elements
 		* ui:margin (optional)
-		* ui:decoratedLabel
+		* ui:decoratedlabel
 		* ui:panel
 	-->
 	<xsl:template match="ui:section">
@@ -23,13 +23,10 @@
 			<xsl:apply-templates select="ui:margin"/>
 			<xsl:call-template name="hideElementIfHiddenSet"/>
 			<xsl:if test="*[not(self::ui:margin)] or not($mode='eager')">
-				<xsl:apply-templates select="ui:decoratedLabel" mode="section"/>
-				<xsl:element name="div">
-					<xsl:attribute name="class">
-						<xsl:text>content</xsl:text>
-					</xsl:attribute>
-					<xsl:apply-templates select="ui:panel"/>
-				</xsl:element>
+				<xsl:apply-templates select="ui:decoratedlabel" mode="section"/>
+				<xsl:apply-templates select="ui:panel">
+					<xsl:with-param name="type" select="''"/>
+				</xsl:apply-templates>
 			</xsl:if>
 		</xsl:element>
 	</xsl:template>

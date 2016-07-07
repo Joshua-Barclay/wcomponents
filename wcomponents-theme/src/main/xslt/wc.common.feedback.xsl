@@ -2,15 +2,15 @@
 	<xsl:import href="wc.constants.xsl"/>
 	<xsl:import href="wc.common.n.className.xsl"/>
 	<!--
-		Feedback comprises ui:messageBox and ui:validationErrors.
+		Feedback comprises ui:messagebox and ui:validationerrors.
 
 		Generates the feedback container/message box, its title and the message list container then applies templates to
 		generate the message list item(s).
 	-->
-	<xsl:template match="ui:messageBox|ui:validationErrors">
+	<xsl:template match="ui:messagebox|ui:validationerrors">
 		<xsl:variable name="type">
 			<xsl:choose>
-				<xsl:when test="self::ui:validationErrors">
+				<xsl:when test="self::ui:validationerrors">
 					<xsl:text>error</xsl:text>
 				</xsl:when>
 				<xsl:otherwise>
@@ -22,10 +22,12 @@
 			<xsl:attribute name="id">
 				<xsl:value-of select="@id"/>
 			</xsl:attribute>
-			<xsl:attribute name="class">
-				<xsl:call-template name="commonClassHelper"/>
-				<xsl:value-of select="concat(' wc_msgbox ', $type)"/>
-			</xsl:attribute>
+			<xsl:call-template name="makeCommonClass">
+				<xsl:with-param name="additional">
+					<xsl:value-of select="concat(' wc_msgbox ', $type)"/>
+				</xsl:with-param>
+			</xsl:call-template>
+
 			<h1>
 				<span>
 					<xsl:choose>

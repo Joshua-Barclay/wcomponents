@@ -40,7 +40,7 @@ import org.apache.commons.logging.LogFactory;
  * @author Rick Brown
  * @since 1.0.0
  */
-public class WMultiFileWidget extends AbstractInput implements Targetable, AjaxTrigger, AjaxTarget,
+public class WMultiFileWidget extends AbstractInput implements Targetable, AjaxInternalTrigger, AjaxTrigger, AjaxTarget,
 		SubordinateTarget {
 
 	/**
@@ -329,9 +329,9 @@ public class WMultiFileWidget extends AbstractInput implements Targetable, AjaxT
 	}
 
 	/**
-	 * Registers an image editor with this file upload widget so that the user will be prompted to edit (crop, rotate etc).
-	 * This obviously only makes sense if this widget is configured to only allow image file types.
-	 * It is probably also a logical idea to set max files to one.
+	 * Registers an image editor with this file upload widget so that the user will be prompted to edit (crop, rotate
+	 * etc). This obviously only makes sense if this widget is configured to only allow image file types. It is probably
+	 * also a logical idea to set max files to one.
 	 *
 	 *
 	 * @param editor The image editor.
@@ -348,7 +348,6 @@ public class WMultiFileWidget extends AbstractInput implements Targetable, AjaxT
 	public WImageEditor getEditor() {
 		return getComponentModel().editor;
 	}
-
 
 	/**
 	 * The AJAX action used when an uploaded file has been selected.
@@ -523,19 +522,6 @@ public class WMultiFileWidget extends AbstractInput implements Targetable, AjaxT
 	}
 
 	/**
-	 * Register the widget for AJAX.
-	 *
-	 * @param request the request being responded to.
-	 */
-	@Override
-	protected void preparePaintComponent(final Request request) {
-		super.preparePaintComponent(request);
-		if (getFileAjaxAction() != null) {
-			AjaxHelper.registerComponentTargetItself(getId(), request);
-		}
-	}
-
-	/**
 	 * {@inheritDoc}
 	 */
 	@Override
@@ -677,18 +663,18 @@ public class WMultiFileWidget extends AbstractInput implements Targetable, AjaxT
 
 		xml.append(XMLUtil.getXMLDeclarationWithThemeXslt(uic));
 
-		xml.appendTagOpen("ui:ajaxResponse");
+		xml.appendTagOpen("ui:ajaxresponse");
 		xml.append(XMLUtil.STANDARD_NAMESPACES);
 		xml.appendClose();
-		xml.appendTagOpen("ui:ajaxTarget");
+		xml.appendTagOpen("ui:ajaxtarget");
 		xml.appendAttribute("id", getId());
 		xml.appendAttribute("action", "replace");
 		xml.appendClose();
 
 		FileWidgetRendererUtil.renderFileElement(this, xml, file, idx);
 
-		xml.appendEndTag("ui:ajaxTarget");
-		xml.appendEndTag("ui:ajaxResponse");
+		xml.appendEndTag("ui:ajaxtarget");
+		xml.appendEndTag("ui:ajaxresponse");
 
 		FileUploadXMLResponse content = new FileUploadXMLResponse(writer.getBuffer().toString());
 		ContentEscape escape = new ContentEscape(content);

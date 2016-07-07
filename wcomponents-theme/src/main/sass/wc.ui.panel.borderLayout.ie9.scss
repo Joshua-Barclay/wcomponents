@@ -1,26 +1,24 @@
 /* wc.ui.panel.borderLayout.ie9.scss */
-.wc_borderLayout_middle {
+.wc_bl_mid {
 	> div {
 		box-sizing: border-box;
 		display: inline-block;
 		vertical-align: text-top;
 
-		&.wc_borderLayout_middle {
-			&25 {
-				width: 25%;
-			}
+		&.wc_bl_mid25 {
+			width: 25%;
+		}
 
-			&50 {
-				width: 50%;
-			}
+		&.wc_bl_mid50 {
+			width: 50%;
+		}
 
-			&75 {
-				width: 75%;
-			}
+		&.wc_bl_mid75 {
+			width: 75%;
+		}
 
-			&100 {
-				width: 100%;
-			}
+		&.wc_bl_mid100 {
+			width: 100%;
 		}
 	}
 }

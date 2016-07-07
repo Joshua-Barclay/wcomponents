@@ -70,7 +70,7 @@ define(["wc/has",
 				formatter,
 				isNative = has("native-dateinput"),
 				BOOTSTRAPPED = "wc/ui/dateField_bootstrapped",
-				DATE_FIELD = new Widget("div", "dateField"),
+				DATE_FIELD = new Widget("div", "wc-datefield"),
 				DATE_FIELD_RO = new Widget("", "wc_datero"),
 				DATE = new Widget("input", "", {"type": "date"}),
 				DATE_PARTIAL = new Widget("input", "", {"type": "text"}),
@@ -161,10 +161,10 @@ define(["wc/has",
 				}
 				childEl.removeAttribute("aria-owns");
 				if ((childEl = getSuggestionList(element, -1))) {
-					element.removeChild(childEl);
+					childEl.parentElement.removeChild(childEl);
 				}
 				if ((childEl = LAUNCHER.findDescendant(element))) {
-					element.removeChild(childEl);
+					childEl.parentElement.removeChild(childEl);
 				}
 			}
 
@@ -325,7 +325,7 @@ define(["wc/has",
 				for (i = 0; i < suggestions.length; i++) {
 					tabIndex = i === 0 ? "0" : "-1";
 					suggestions[i].attributes = suggestions[i].attributes || "";
-					suggestions[i].attributes += " role='option' " + VALUE_ATTRIB + "='" + suggestions[i].html + "' tabindex='" + tabIndex + "'";
+					suggestions[i].attributes += " role='option' class='wc_invite' " + VALUE_ATTRIB + "='" + suggestions[i].html + "' tabindex='" + tabIndex + "'";
 
 					html.push(tag.toTag(DATE_FIELD_TAGNAME, false, suggestions[i].attributes));
 					html.push(suggestions[i].html);
@@ -458,12 +458,17 @@ define(["wc/has",
 				}
 
 				if (matches.length && (suggestionList = getSuggestionList(dateField))) {
+					suggestionList.setAttribute("aria-busy", "true");
 					suggestionList.innerHTML = "";
 					if (!(matches.length === 1 && formattedDatesSame(lastVal, instance.getTextBox(dateField).value))) {
 						suggestionList.innerHTML = getSuggestions(matches);
+						suggestionList.removeAttribute("aria-busy");
 						if (!shed.isExpanded(dateField)) {
 							shed.expand(dateField);
 						}
+					}
+					else if (shed.isExpanded(dateField)) {
+						shed.collapse(dateField);
 					}
 				}
 			}
@@ -491,6 +496,10 @@ define(["wc/has",
 					}
 					else if ((suggestionList = getSuggestionList(dateField))) {
 						suggestionList.innerHTML = "";
+						suggestionList.setAttribute("aria-busy", "true");
+						if (shed.isExpanded(dateField)) {
+							shed.collapse(dateField);
+						}
 					}
 				}
 
@@ -964,12 +973,19 @@ define(["wc/has",
 			 * @returns {String} The date in transfer format or an empty string if the field has no value.
 			 */
 			this.getValue = function(element, guess) {
-				var result, textbox;
-				if (element && (element = DATE_FIELD.findAncestor(element))) {
-					result = element.getAttribute(VALUE_ATTRIB);
-					if (!result && (textbox = instance.getTextBox(element)) && textbox.value) {
+				var result, textbox, _element;
+				if (element && (_element = DATE_FIELD.findAncestor(element))) {
+					if ((result = _element.getAttribute(VALUE_ATTRIB))) {
+						return result;
+					}
+
+					if (this.isNativeInput(element) && (result = element.value)) {
+						return result;
+					}
+
+					if (!result && (textbox = instance.getTextBox(_element)) && textbox.value) {
 						// we don't have a recorded xfer date for this element, check its value
-						result = reverseFormat(textbox, guess);
+						return reverseFormat(textbox, guess);
 					}
 				}
 				return result || "";

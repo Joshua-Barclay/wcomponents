@@ -4,6 +4,7 @@
 	<xsl:import href="wc.ui.label.n.labelClassHelper.xsl"/>
 	<xsl:import href="wc.ui.label.n.labelCommonAttributes.xsl"/>
 	<xsl:import href="wc.ui.label.n.labelHintHelper.xsl"/>
+	<xsl:import href="wc.common.offscreenSpan.xsl"/>
 
 	<!--
 		Basic helper template to make a label for a labelable element.
@@ -29,7 +30,6 @@
 	-->
 	<xsl:template name="makeLabel">
 		<xsl:param name="labelableElement"/>
-		<xsl:param name="style"/>
 
 		<xsl:variable name="readOnly">
 			<xsl:if test="$labelableElement/@readOnly">
@@ -51,7 +51,6 @@
 		<xsl:element name="{$elementType}">
 			<xsl:call-template name="labelCommonAttributes">
 				<xsl:with-param name="element" select="$labelableElement"/>
-				<xsl:with-param name="style" select="$style"/>
 			</xsl:call-template>
 
 			<xsl:choose>
@@ -59,17 +58,14 @@
 					<xsl:if test="@for and @for!=''"><!-- this is an explicit 'for' and not for implied by nesting -->
 						<xsl:attribute name="for">
 							<xsl:value-of select="@for"/>
-							<!-- special cases for dateField -->
-							<xsl:choose>
-								<xsl:when test="name($labelableElement) = 'ui:dateField'">
-									<xsl:text>${wc.ui.dateField.id.input.suffix}</xsl:text>
-								</xsl:when>
-							</xsl:choose>
+							<xsl:if test="local-name($labelableElement) = 'datefield'">
+								<xsl:text>_input</xsl:text>
+							</xsl:if>
 						</xsl:attribute>
 					</xsl:if>
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:attribute name="${wc.ui.label.attribute.readonlyFor}">
+					<xsl:attribute name="data-wc-rofor">
 						<xsl:value-of select="@for"/>
 					</xsl:attribute>
 				</xsl:otherwise>
@@ -111,7 +107,7 @@
 			label for those element types whereas they are normally output after the actual
 			control.
 		-->
-		<xsl:if test="name($labelableElement) = 'ui:checkBox' or name($labelableElement) = 'ui:radioButton'">
+		<xsl:if test="name($labelableElement) = 'ui:checkbox' or name($labelableElement) = 'ui:radiobutton'">
 			<xsl:call-template name="inlineError">
 				<xsl:with-param name="errors" select="key('errorKey',@for)"/>
 				<xsl:with-param name="id" select="@for"/>

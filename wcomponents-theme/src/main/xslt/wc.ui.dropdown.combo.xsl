@@ -11,7 +11,7 @@
 		<xsl:variable name="id" select="@id" />
 		<xsl:variable name="isError" select="key('errorKey',$id)" />
 		<xsl:variable name="myLabel" select="key('labelKey',$id)"/>
-		<xsl:variable name="listId" select="concat($id, '${wc.ui.combo.id.list.suffix}')"/>
+		<xsl:variable name="listId" select="concat($id, '_l')"/>
 		<xsl:if test="not($myLabel)">
 			<xsl:call-template name="checkLabel">
 				<xsl:with-param name="force" select="1"/>
@@ -61,18 +61,13 @@
 				<xsl:with-param name="myLabel" select="$myLabel[1]"/>
 			</xsl:call-template>
 		</xsl:element>
-		<xsl:element name="ul">
-			<xsl:attribute name="id">
-				<xsl:value-of select="$listId" />
-			</xsl:attribute>
-			<xsl:attribute name="role">
-				<xsl:text>listbox</xsl:text>
-			</xsl:attribute>
-			<xsl:attribute name="aria-controls">
-				<xsl:value-of select="$id"/>
-			</xsl:attribute>
-			<xsl:call-template name="hiddenElement"/>
+		<ul id="{$listId}" role="listbox" aria-controls="{$id}" hidden="hidden">
+			<xsl:if test="not(*)">
+				<xsl:attribute name="aria-busy">
+					<xsl:copy-of select="$t"/>
+				</xsl:attribute>
+			</xsl:if>
 			<xsl:apply-templates mode="comboDataList" />
-		</xsl:element>
+		</ul>
 	</xsl:template>
 </xsl:stylesheet>

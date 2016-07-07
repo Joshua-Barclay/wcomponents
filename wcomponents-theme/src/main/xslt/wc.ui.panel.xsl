@@ -8,19 +8,20 @@
 	<!--
 		WPanel is the basic layout component in the framework. Genreally output as
 		a "block" container (usually div).
-	
+
 		Child elements
 		optional ui:margin and exactly one of:
-			* ui:borderLayout
-			* ui:columnLayout
+			* ui:borderlayout
+			* ui:columnlayout
 			* ui:content
-			* ui:flowLayout
-			* ui:gridLayout
-			* ui:listLayout
+			* ui:flowlayout
+			* ui:gridlayout
+			* ui:listlayout
 	-->
 	<xsl:template match="ui:panel">
+		<xsl:param name="type" select="@type"/>
 		<xsl:variable name="id" select="@id"/>
-		
+
 		<xsl:variable name="containerElement">
 			<xsl:call-template name="WPanelContainerElement"/>
 		</xsl:variable>
@@ -29,19 +30,21 @@
 				<xsl:value-of select="$id"/>
 			</xsl:attribute>
 			<xsl:attribute name="class">
-				<xsl:call-template name="WPanelClass"/>
+				<xsl:call-template name="WPanelClass">
+					<xsl:with-param name="type" select="$type"/>
+				</xsl:call-template>
 			</xsl:attribute>
 			<xsl:if test="@buttonId">
-				<xsl:attribute name="${wc.common.attribute.button}">
+				<xsl:attribute name="data-wc-submit">
 					<xsl:value-of select="@buttonId"/>
 				</xsl:attribute>
 			</xsl:if>
-			<xsl:if test="@type='header'">
+			<xsl:if test="$type='header'">
 				<xsl:attribute name="role">
 					<xsl:text>banner</xsl:text>
 				</xsl:attribute>
 			</xsl:if>
-			<xsl:if test="@mode or key('targetKey',$id) or parent::ui:ajaxTarget[@action='replace']">
+			<xsl:if test="@mode or key('targetKey',$id) or parent::ui:ajaxtarget[@action='replace']">
 				<xsl:call-template name="setARIALive"/>
 				<xsl:if test="@mode">
 					<xsl:attribute name="data-wc-ajaxalias">

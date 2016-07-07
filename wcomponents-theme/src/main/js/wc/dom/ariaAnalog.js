@@ -371,11 +371,12 @@ define(["wc/has",
 
 			if (event.canCapture) {
 				event.add(element, event.TYPE.focus, eventWrapper.bind(this), null, null, true);
+				event.add(element, event.TYPE.click, eventWrapper.bind(this), null, null, true);
 			}
 			else {
 				event.add(element, event.TYPE.focusin, eventWrapper.bind(this));
+				event.add(element, event.TYPE.click, eventWrapper.bind(this));
 			}
-			event.add(element, event.TYPE.click, eventWrapper.bind(this));
 			event.add(element, event.TYPE.keydown, eventWrapper.bind(this));
 			shed.subscribe(shed.actions.SELECT, this.shedObserver.bind(this));
 			shed.subscribe(shed.actions.DESELECT, this.shedObserver.bind(this));
@@ -579,6 +580,48 @@ define(["wc/has",
 		};
 
 		/**
+		 * A helper for activate which deals with selection of single-selects.
+		 *
+		 * @function
+		 * @private
+		 * @param {Element} element The element being activated.
+		 * @param {boolean} CTRL Indicates the Ctrl key was depressed during activation.
+		 * @param {Object} instance The current analog module.
+		 */
+		function singleSelectActivateHelper(element, CTRL, instance) {
+			if (instance.simpleSelection || (CTRL && instance.ctrlAllowsDeselect)) {
+				shed.toggle(element, shed.actions.SELECT);
+			}
+			else {
+				shed.select(element, shed.isSelected(element)); // do not publish a re-select selected / failed de-select.
+			}
+		}
+
+		/**
+		 * A helper for activate which deals with multi-selects with the SHIFT control depressed.
+		 *
+		 * @function
+		 * @private
+		 * @param {Element} element The element being activated.
+		 * @param {Element} container The analog container.
+		 * @param {boolean} CTRL Indicates the Ctrl key was depressed during activation.
+		 * @param {Object} instance The current analog module.
+		 * @returns {Boolean} true unless a group selection is undertaken.
+		 */
+		function multiSelectWithShiftHelper(element, container, CTRL, instance) {
+			var lastActivated;
+
+			if (instance.lastActivated && instance.lastActivated[container.id]) {
+				lastActivated = document.getElementById(instance.lastActivated[container.id]);
+			}
+			if (lastActivated) {
+				instance.doGroupSelect(element, lastActivated, CTRL);
+				return false;
+			}
+			shed.toggle(element, shed.actions.SELECT);
+			return true;
+		}
+		/**
 		 * Activate the element, that is SELECT or DESELECT it.
 		 *
 		 * @function
@@ -590,7 +633,6 @@ define(["wc/has",
 		 */
 		AriaAnalog.prototype.activate = function(element, SHIFT, CTRL) {
 			var container,
-				lastActivated,
 				selectMode,
 				isMultiSelect,
 				setLastActivated = true;
@@ -608,29 +650,16 @@ define(["wc/has",
 					}
 				}
 
-				if (this.exclusiveSelect === this.SELECT_MODE.SINGLE || ((this.exclusiveSelect === this.SELECT_MODE.MIXED && isMultiSelect !== "true"))) {
-					if (this.simpleSelection || (CTRL && this.ctrlAllowsDeselect)) {
-						shed.toggle(element, shed.actions.SELECT);
-					}
-					else {
-						shed.select(element, shed.isSelected(element)); // do not publish a failed deselect.
-					}
+				if (this.exclusiveSelect === this.SELECT_MODE.SINGLE || this.exclusiveSelect === this.SELECT_MODE.MIXED) {
+					singleSelectActivateHelper(element, CTRL, this);
 				}
 				else if (SHIFT && container) {
-					if (this.lastActivated && this.lastActivated[container.id]) {
-						lastActivated = document.getElementById(this.lastActivated[container.id]);
-					}
-					if (lastActivated) {
-						this.doGroupSelect(element, lastActivated, CTRL);
-						setLastActivated = false;
-					}
-					else {
-						shed.toggle(element, shed.actions.SELECT);
-					}
+					setLastActivated = multiSelectWithShiftHelper(element, container, CTRL, this);
 				}
 				else {
 					shed.toggle(element, shed.actions.SELECT);
 				}
+
 				if (setLastActivated && this.lastActivated) {
 					this.setLastActivated(element, container);
 				}

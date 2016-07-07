@@ -9,7 +9,7 @@
 		<xsl:param name="myTable"/>
 		<xsl:param name="indent" select="0"/>
 		<xsl:param name="hasRole" select="0"/>
-		
+
 		<xsl:variable name="tableId" select="$myTable/@id"/>
 		<xsl:variable name="tbleColPos">
 			<xsl:value-of select="position()"/>
@@ -21,35 +21,26 @@
 			<xsl:if test="$hasRole &gt; 0">
 				<xsl:attribute name="role">gridcell</xsl:attribute>
 			</xsl:if>
-			<xsl:attribute name="class">
-				<xsl:call-template name="commonClassHelper"/>
-				<!-- IE 8- needs more help with striping -->
-				<xsl:if test="$myTable/@striping = 'cols' and position() mod 2 = 0">
-					<xsl:text> wc_table_stripe</xsl:text>
-				</xsl:if>
-				<xsl:variable name="alignedCol">
+			<xsl:call-template name="makeCommonClass">
+				<xsl:with-param name="additional">
 					<xsl:value-of select="$colHeaderElement/@align"/>
-				</xsl:variable>
-				<xsl:choose>
-					<xsl:when test="$alignedCol!=''">
-						<xsl:value-of select="concat(' ',$alignedCol)"/>
-					</xsl:when>
-					<xsl:otherwise>
-						<xsl:text> ${wc.common.align.std}</xsl:text>
-					</xsl:otherwise>
-				</xsl:choose>
-			</xsl:attribute>
-			
+					<!-- IE 8- needs more help with striping -->
+					<xsl:if test="$myTable/@striping = 'cols' and position() mod 2 = 0">
+						<xsl:text> wc_table_stripe</xsl:text>
+					</xsl:if>
+				</xsl:with-param>
+			</xsl:call-template>
+
 			<xsl:if test="$colHeaderElement or $rowHeaderElement">
 				<xsl:attribute name="headers">
 					<xsl:variable name="colHeader">
 						<xsl:if test="$colHeaderElement">
-							<xsl:value-of select="concat($tableId,'${wc.ui.table.id.thead.th.suffix}',$tbleColPos)"/>
+							<xsl:value-of select="concat($tableId,'_thh',$tbleColPos)"/>
 						</xsl:if>
 					</xsl:variable>
 					<xsl:variable name="rowHeader">
 						<xsl:if test="$rowHeaderElement">
-							<xsl:value-of select="concat($tableId,'${wc.ui.table.id.tr.th.suffix}',../@rowIndex)"/>
+							<xsl:value-of select="concat($tableId,'_trh',../@rowIndex)"/>
 						</xsl:if>
 					</xsl:variable>
 					<xsl:value-of select="normalize-space(concat($colHeader,' ',$rowHeader))"/>
